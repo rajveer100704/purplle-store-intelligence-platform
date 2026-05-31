@@ -22,6 +22,28 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
+import sys
+from pathlib import Path
+import asyncio
+import json
+
+# Add project root to sys.path to enable imports when running on Streamlit Cloud
+project_root = str(Path(__file__).parent.parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+# Try importing the local API logic for direct database fallback
+try:
+    from src.db.database import AsyncSessionLocal
+    from src.api.metrics import get_metrics
+    from src.api.funnel import get_funnel
+    from src.api.heatmap import get_heatmap
+    from src.api.anomalies import get_anomalies
+    from src.api.health import health_check
+    LOCAL_DB_AVAILABLE = True
+except Exception as e:
+    LOCAL_DB_AVAILABLE = False
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────────────────────────────────────
@@ -41,12 +63,41 @@ st.set_page_config(
 # ──────────────────────────────────────────────────────────────────────────────
 
 def api_get(path: str) -> dict | None:
+    # First attempt: HTTP request to FastAPI backend
     try:
-        r = requests.get(f"{API_BASE}{path}", timeout=5)
+        r = requests.get(f"{API_BASE}{path}", timeout=2)
         r.raise_for_status()
         return r.json()
-    except Exception as e:
-        st.sidebar.error(f"API error: {e}")
+    except Exception as http_err:
+        # Second attempt: Direct SQLite DB queries via imports (Standalone Mode)
+        if LOCAL_DB_AVAILABLE:
+            try:
+                async def run_query():
+                    async with AsyncSessionLocal() as db:
+                        if path == "/health":
+                            res = await health_check(db)
+                            return json.loads(res.model_dump_json())
+                        elif path.startswith("/stores/") and path.endswith("/metrics"):
+                            store_id = path.split("/")[2]
+                            res = await get_metrics(store_id, db)
+                            return json.loads(res.model_dump_json())
+                        elif path.startswith("/stores/") and path.endswith("/funnel"):
+                            store_id = path.split("/")[2]
+                            res = await get_funnel(store_id, db)
+                            return json.loads(res.model_dump_json())
+                        elif path.startswith("/stores/") and path.endswith("/heatmap"):
+                            store_id = path.split("/")[2]
+                            res = await get_heatmap(store_id, db)
+                            return json.loads(res.model_dump_json())
+                        elif path.startswith("/stores/") and path.endswith("/anomalies"):
+                            store_id = path.split("/")[2]
+                            res = await get_anomalies(store_id, db)
+                            return json.loads(res.model_dump_json())
+                return asyncio.run(run_query())
+            except Exception as db_err:
+                st.sidebar.error(f"Local DB query error: {db_err}")
+                return None
+        st.sidebar.error(f"API unreachable and no local DB fallback: {http_err}")
         return None
 
 

@@ -10,5 +10,4 @@ htmlcov/
 env/
 venv/
 ENV/
-store_intelligence.db
 yolov8s.pt
