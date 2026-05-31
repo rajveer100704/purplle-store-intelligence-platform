@@ -1,0 +1,285 @@
+# Resource-Driven Retail Intelligence Upgrade
+
+Transform the pipeline from a generic "Computer Vision Project" into a **Retail Intelligence System** by integrating the three hackathon resources as first-class architectural components.
+
+---
+
+## Context
+
+The current system uses generic zone IDs (`ZONE_1`, `ZONE_4`) and lacks real POS ground-truth correlation. The hackathon provides three resources that most candidates will treat as reference files. We'll treat them as **ground truth inputs**:
+
+| Resource | File | Role |
+|----------|------|------|
+| Store Layout Excel | `Brigade Road - Store layoutc5f5d56.xlsx` | Ground Truth Store Topology |
+| POS Transaction CSV | `Brigade_Bangalore_10_April_26 (1)bc6219c.csv` | Ground Truth Purchase Signal |
+| Evaluation Framework PDF | `Assessment Evaluation Frameworkb24a398.pdf` | Scoring Checklist |
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Store Layout → Zone Polygons**: The Excel file contains only images (no structured data). We will manually transcribe the brand shelf positions from the layout image into normalized coordinates in `store_config.json`. The zones identified from the **"Revised" layout** (Image 0) are:
+>
+> **Top wall (left→right):** EB Korean, The Face Shop, Good Vibes, DermDoc, Minimalist, Aqualogica, Lakme Skin, Accessories
+>
+> **Bottom wall (left→right):** Maybelline, Faces Canada, Lakme, Colorbar+Sugar, Swiss Beauty, Renee/NY Bae, Alps Goodness, Streax
+>
+> **Center:** F.O.H (Front of House), Nail Unit, Fragrance, Makeup Units
+>
+> **Right side:** Cash Counter (Billing), PMU (Permanent Makeup Unit)
+>
+> **Left side:** Entry Door (curved glass door)
+>
+> The polygons will be defined as normalized [0..1] coordinates relative to frame dimensions, since actual pixel mappings depend on the camera angle and would need calibration per camera. A CLI tool will also be provided to help calibrate these.
+
+> [!IMPORTANT]
+> **POS CSV Schema Change**: The real POS CSV uses columns `order_id`, `invoice_number`, `order_date`, `order_time`, `store_id` (value: `ST1008`), `store_name` (`Brigade_Bangalore`), `brand_name`, `product_name`, `qty`, `NMV`, `total_amount` etc. The current `POSCorrelator` expects `timestamp` and `store_id` columns. We need to adapt the parser to handle both the real CSV schema and the generic one.
+
+> [!WARNING]
+> **Evaluation Scoring Breakdown** (from the PDF):
+> - Detection Pipeline: **30 marks** (entry/exit accuracy, re-entry/staff handling, edge cases)
+> - API & Business Logic: **35 marks** (endpoint correctness, funnel logic, anomaly detection)
+> - Production Readiness: **20 marks** (docker, observability, testing)
+> - Engineering Thinking: **15 marks** (CHOICES.md, DESIGN.md, reasoning depth)
+>
+> **Key insight**: API & Business Logic is the highest-weighted category (35 marks). Brand-level analytics directly strengthens this score.
+
+---
+
+## Proposed Changes
+
+### Layer 0 — Store Configuration (`src/layout/`)
+
+#### [NEW] [store_config.json](file:///c:/Users/BIT/Purplle_Hackathon/src/layout/store_config.json)
+Structured JSON capturing the full store topology from the Excel layout:
+```json
+{
+  "store_id": "ST1008",
+  "store_name": "Brigade_Bangalore",
+  "city": "Bangalore",
+  "entry_line": [[0.02, 0.35], [0.02, 0.75]],
+  "exit_line": [[0.02, 0.35], [0.02, 0.75]],
+  "billing_zone": { "zone_id": "CASH_COUNTER", "polygon": [...] },
+  "queue_zone": { "zone_id": "QUEUE_AREA", "polygon": [...] },
+  "zones": [
+    { "zone_id": "LAKME", "brand": "Lakme", "wall": "bottom", "polygon": [...] },
+    { "zone_id": "FACES_CANADA", "brand": "Faces Canada", "wall": "bottom", ... },
+    { "zone_id": "MAYBELLINE", "brand": "Maybelline", "wall": "bottom", ... },
+    { "zone_id": "MINIMALIST", "brand": "Minimalist", "wall": "top", ... },
+    ...16 brand zones total...
+    { "zone_id": "FOH", "brand": null, "type": "service_area", ... },
+    { "zone_id": "NAIL_UNIT", "brand": null, "type": "service_area", ... },
+    { "zone_id": "FRAGRANCE", "brand": null, "type": "service_area", ... },
+    { "zone_id": "MAKEUP_UNIT", "brand": null, "type": "service_area", ... }
+  ]
+}
+```
+
+#### [NEW] [parser.py](file:///c:/Users/BIT/Purplle_Hackathon/src/layout/parser.py)
+- Parse the Excel file to extract images (for documentation)
+- Load `store_config.json` and convert to runtime `StoreConfig` dataclass
+- Provide `load_store_config(store_id) -> StoreConfig` function used by the pipeline
+
+#### [NEW] [zones.py](file:///c:/Users/BIT/Purplle_Hackathon/src/layout/zones.py)
+- `ZoneRegistry` class holding all Shapely Polygon objects
+- `zone_at(center) -> str | None` — returns brand name zone ID
+- `is_in_billing(center) -> bool`
+- `is_in_queue(center) -> bool`
+- `is_near_entry(center) -> bool`
+- `all_zone_ids() -> list[str]` — for anomaly engine initialization
+
+#### [NEW] [mapper.py](file:///c:/Users/BIT/Purplle_Hackathon/src/layout/mapper.py)
+- `NormalizedMapper` to convert normalized [0,1] polygon coords to pixel coords given frame (w, h)
+- Used at runtime when processing each camera's frames
+
+---
+
+### Layer 1 — POS Correlator Upgrade (`src/pos/`)
+
+#### [NEW] [parser.py](file:///c:/Users/BIT/Purplle_Hackathon/src/pos/parser.py)
+Parse the real POS CSV with its actual schema:
+- Combine `order_date` + `order_time` → UTC datetime
+- Map `store_id` (`ST1008`) to pipeline store_id
+- Extract: `invoice_number`, `brand_name`, `product_name`, `qty`, `total_amount`, `customer_name`
+- Group line items by `order_id`/`invoice_number` into `POSTransaction` objects
+- Each transaction = one unique invoice (may have multiple line items/brands)
+
+#### [NEW] [correlator.py](file:///c:/Users/BIT/Purplle_Hackathon/src/pos/correlator.py)
+Enhanced POS correlator replacing the existing `pos_correlator.py`:
+- Match visitor exit times to POS timestamps within configurable window (±5 min)
+- Extract **brands purchased** from matched transaction line items
+- Set `session.converted = True`, `session.purchase_amount`, `session.brands_purchased`
+- Track which brands were visited vs which were purchased (for shelf conversion)
+
+#### [NEW] [conversion.py](file:///c:/Users/BIT/Purplle_Hackathon/src/pos/conversion.py)
+Conversion attribution engine:
+- `overall_conversion_rate()` — visitors who purchased / total visitors
+- `shelf_conversion(zone_id)` — visitors to zone who later purchased
+- `brand_conversion(brand)` — visitors to brand zone who purchased that brand
+- `cross_sell_paths()` — common zone visit sequences before purchase
+
+---
+
+### Layer 2 — Analytics Modules (`src/analytics/`)
+
+#### [NEW] [heatmap.py](file:///c:/Users/BIT/Purplle_Hackathon/src/analytics/heatmap.py)
+Brand-level product engagement heatmap:
+```python
+{
+  "LAKME": {"visits": 52, "avg_dwell": 31, "unique_visitors": 38},
+  "MINIMALIST": {"visits": 14, "avg_dwell": 67, "unique_visitors": 12}
+}
+```
+
+#### [NEW] [shelf_conversion.py](file:///c:/Users/BIT/Purplle_Hackathon/src/analytics/shelf_conversion.py)
+Per-brand shelf conversion analysis:
+```python
+{
+  "LAKME": {"visitors": 52, "buyers": 17, "conversion_pct": 32.6},
+  "LOREAL": {"visitors": 38, "buyers": 11, "conversion_pct": 28.9}
+}
+```
+
+#### [NEW] [customer_journey.py](file:///c:/Users/BIT/Purplle_Hackathon/src/analytics/customer_journey.py)
+Track zone visit sequences per visitor:
+- `session.visited_brands = ["LAKME", "FACES_CANADA", "CASH_COUNTER"]`
+- Top journey paths (e.g., `LAKME → CASH_COUNTER`, `FACES_CANADA → LAKME → CASH_COUNTER`)
+- Average journey length, most common first/last zone
+
+#### [NEW] [dead_zone.py](file:///c:/Users/BIT/Purplle_Hackathon/src/analytics/dead_zone.py)
+Brand-aware dead zone detection:
+- Instead of `"ZONE_7": "dead"` → `"FOXTALE": "dead"`, `"MAYBELLINE": "dead"`
+- Uses real brand names for actionable business insights
+
+#### [NEW] [revenue.py](file:///c:/Users/BIT/Purplle_Hackathon/src/analytics/revenue.py)
+Revenue analytics from POS data:
+- Revenue by brand, by hour, by salesperson
+- Average basket size
+- Revenue per visitor (footfall → revenue conversion)
+
+---
+
+### Layer 3 — Pipeline Integration
+
+#### [MODIFY] [config.py](file:///c:/Users/BIT/Purplle_Hackathon/src/config.py)
+- Add `STORE_CONFIG_PATH` setting (default: `src/layout/store_config.json`)
+- Add `POS_CSV_PATH` setting (env-configurable)
+- Add `POS_MATCH_WINDOW_SECONDS` (default: 300)
+
+#### [MODIFY] [scanner.py](file:///c:/Users/BIT/Purplle_Hackathon/src/scanner.py)
+- Update to discover `store_config.json` from the layout package
+- Auto-discover POS CSV files matching the real filename patterns (not just `pos_transactions.csv`)
+- Add `ScanReport.store_config: StoreConfig | None`
+
+#### [MODIFY] [pipeline.py](file:///c:/Users/BIT/Purplle_Hackathon/src/pipeline.py)
+- Load `StoreConfig` from `src/layout/store_config.json` at startup
+- Pass real zone polygons to `EventEmitter` instead of empty layout dict
+- Use new POS correlator from `src/pos/` instead of old `pos_correlator.py`
+- After processing, run analytics modules and write results
+
+#### [MODIFY] [session_manager.py](file:///c:/Users/BIT/Purplle_Hackathon/src/session_manager.py)
+- Add `visited_brands: list[str]` to `VisitorSession`
+- Add `brands_purchased: list[str]` to `VisitorSession`
+- Track brand zone visit order for journey analysis
+
+#### [MODIFY] [event_emitter.py](file:///c:/Users/BIT/Purplle_Hackathon/src/event_emitter.py)
+- Accept `ZoneRegistry` from layout package instead of raw dict
+- Zone IDs now emit brand names (e.g., `"LAKME"`) instead of `"ZONE_4"`
+- Track `visited_brands` on sessions when zone events fire
+
+#### [MODIFY] [anomaly_engine.py](file:///c:/Users/BIT/Purplle_Hackathon/src/anomaly_engine.py)
+- Initialize with real brand zone IDs from `StoreConfig`
+- Dead zone alerts now reference brand names
+
+---
+
+### Layer 4 — API Enhancements
+
+#### [MODIFY] [schemas.py](file:///c:/Users/BIT/Purplle_Hackathon/src/api/schemas.py)
+Add new response models:
+- `BrandHeatmapItem` — visits, avg_dwell, unique_visitors per brand
+- `ShelfConversionItem` — visitors, buyers, conversion_pct per brand
+- `JourneyPathItem` — path sequence, count, avg_duration
+- Enhanced `MetricsResponse` — add `revenue`, `avg_basket_size`, `pos_transactions_count`
+- Enhanced `FunnelResponse` — add `pos_purchase` stage (actual POS-confirmed purchase)
+
+#### [MODIFY] [heatmap.py](file:///c:/Users/BIT/Purplle_Hackathon/src/api/heatmap.py)
+- Zone names now show brand names instead of generic IDs
+
+#### [MODIFY] [funnel.py](file:///c:/Users/BIT/Purplle_Hackathon/src/api/funnel.py)
+- Add POS-confirmed purchase as the final funnel stage
+- Funnel becomes: Entry → Zone Visit → Billing → POS Purchase (actual)
+
+#### [NEW] [brand_analytics.py](file:///c:/Users/BIT/Purplle_Hackathon/src/api/brand_analytics.py)
+New API endpoints:
+- `GET /stores/{store_id}/brands/heatmap` — brand engagement heatmap
+- `GET /stores/{store_id}/brands/conversion` — shelf conversion by brand
+- `GET /stores/{store_id}/brands/journeys` — customer journey analysis
+- `GET /stores/{store_id}/brands/revenue` — revenue by brand
+
+#### [MODIFY] [main.py](file:///c:/Users/BIT/Purplle_Hackathon/src/api/main.py)
+- Register the new `brand_analytics` router
+
+---
+
+### Layer 5 — Evaluation Framework Alignment
+
+#### [NEW] [validation_report.md](file:///c:/Users/BIT/Purplle_Hackathon/evaluation/validation_report.md)
+Auto-generated report aligned to the PDF scoring rubric:
+- Detection Pipeline checklist (30 marks)
+- API & Business Logic checklist (35 marks)
+- Production Readiness checklist (20 marks)
+- Engineering Thinking checklist (15 marks)
+
+#### [NEW] [manual_counts.json](file:///c:/Users/BIT/Purplle_Hackathon/evaluation/manual_counts.json)
+Ground truth counts for validation:
+- POS transactions: 24 unique invoices from the CSV
+- Store: ST1008 / Brigade_Bangalore
+- Date: 10-Apr-2026
+- Time range: 12:15 to 21:39
+- Brands in POS: DERMDOC, Good Vibes, Faces Canada, Round Lab, NY Bae, Renee, etc.
+
+#### [MODIFY] [DESIGN.md](file:///c:/Users/BIT/Purplle_Hackathon/DESIGN.md)
+Update architecture diagram to show the new resource-driven flow:
+```
+Store Layout Excel → Layout Parser → Zone Registry
+Videos → YOLO → ByteTrack → ReID → EventEmitter → events.jsonl
+POS CSV → POS Parser → Conversion Attribution
+events.jsonl → SQLite → FastAPI → Dashboard
+```
+
+---
+
+### Layer 6 — Copy Resources & Dashboard
+
+#### Copy resource files into project
+- Copy POS CSV to `data/pos_transactions.csv` (normalized name)
+- Copy store layout Excel to `data/store_layout.xlsx`
+- Copy evaluation PDF to `evaluation/scoring_rubric.pdf`
+
+#### [MODIFY] [dashboard/app.py](file:///c:/Users/BIT/Purplle_Hackathon/dashboard/app.py)
+Add new dashboard sections:
+- **Brand Engagement**: Horizontal bar chart with brand names
+- **Shelf Conversion Table**: Brand → Visitors → Buyers → Conversion%
+- **POS Revenue**: Revenue by brand pie chart
+- **Customer Journey**: Top 5 journey paths Sankey diagram
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- `pytest tests/ --cov=src` — all existing 74 tests continue to pass
+- New tests:
+  - `tests/test_layout_parser.py` — store_config.json loading, zone polygon creation
+  - `tests/test_pos_parser.py` — real CSV parsing, transaction grouping
+  - `tests/test_pos_correlator_v2.py` — time-window matching, brand extraction
+  - `tests/test_analytics.py` — shelf conversion, journey, dead zone with brand names
+  - `tests/test_brand_api.py` — new API endpoints return correct schemas
+
+### Manual Verification
+- Run pipeline with real POS CSV and verify `session.converted` is set for matched transactions
+- Verify API heatmap endpoint returns brand names (LAKME, FACES_CANADA) instead of ZONE_1
+- Verify funnel includes POS-confirmed purchase stage
+- Inspect `evaluation/validation_report.md` for completeness against rubric

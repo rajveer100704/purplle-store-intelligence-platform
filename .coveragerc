@@ -1,0 +1,6 @@
+[run]
+omit =
+    src/pipeline.py
+    src/replay.py
+    src/scanner.py
+    src/api/debug.py

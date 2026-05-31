@@ -1,0 +1,78 @@
+# Implementation Plan – Resolution of 10 Critical Flaws
+
+This plan addresses all 10 architectural and technical flaws identified during the senior review. These improvements will make the submission robust, interview-defensible, and ready for production-grade evaluation.
+
+---
+
+## Proposed Changes
+
+### Component 1: Visitor State Machine (`src/state_machine.py`)
+- **[MODIFY]** Remove the `PURCHASED` state from `VisitorState`. It is a post-processing business attribute, not a real-time tracking state.
+- **[MODIFY]** Remove the `pos_matched` trigger and corresponding transitions from the state machine.
+- **[MODIFY]** Keep the states: `OUTSIDE`, `ENTERED`, `IN_ZONE`, `IN_BILLING`, `EXITED`, `REENTERED`.
+- **[MODIFY]** Update `is_in_billing()` to check only for `VisitorState.IN_BILLING`.
+- **[MODIFY]** Update or remove `has_purchased()` to avoid referring to FSM state.
+
+### Component 2: Session Manager & Staff Heuristic (`src/session_manager.py`)
+- **[MODIFY]** Update `VisitorSession` to include `converted: bool = False` and `purchase_amount: float | None = None` fields.
+- **[MODIFY]** Update `mark_purchased` to receive an optional amount, set `session.converted = True`, and save `purchase_amount`.
+- **[MODIFY]** Replace the impossible `dwell > 4h` staff detection rule in `_score_staff()` with:
+  1. **Camera Coverage**: visitor seen in $\ge 3$ distinct cameras/videos of the same store (+2 points).
+  2. **Recurrence**: visitor has multiple sessions on separate days or distinct video runs (+2 points).
+  3. **Frame Density**: presence ratio (frames visible / total frames in video) $> 0.30$ (+2 points).
+  4. **Uniform HSV profile**: matches staff uniform hue (+1 point).
+- **[MODIFY]** Keep the classification threshold at $\ge 3$ points for `is_staff = True`.
+
+### Component 3: ReID Threshold Calibration (`scripts/calibrate_reid.py`)
+- **[NEW]** Add `scripts/calibrate_reid.py` that loads mock embeddings, performs a sweep over thresholds (0.50 to 0.90), counts false merges vs missed matches, and outputs a recommendation.
+- **[MODIFY]** Update [CHOICES.md](file:///c:/Users/BIT/Purplle_Hackathon/CHOICES.md) and [DESIGN.md](file:///c:/Users/BIT/Purplle_Hackathon/DESIGN.md) to document this empirical calibration reasoning.
+
+### Component 4: Fallback Exit Logic & `TRACK_LOST` State (`src/event_emitter.py`)
+- **[MODIFY]** Introduce a `TRACK_LOST` internal tracking state in `EventEmitter`.
+- **[MODIFY]** Keep a dictionary `self._lost_tracks = {}` mapping `track_id` $\rightarrow$ `lost_since_time`.
+- **[MODIFY]** If a track is absent:
+  - Do NOT emit an immediate `EXIT`.
+  - Set `lost_since_time = frame_time`.
+  - If `lost_duration > 5.0` seconds:
+    - Check if its last known location `ts.prev_center` is near an exit boundary (within 10% of the image edges or within 50px of the `exit_line`).
+    - If near the boundary, transition to `EXITED` and emit `EXIT`.
+    - If NOT near the boundary, do not emit EXIT immediately; assume occlusion. Clean up after a longer timeout (e.g. 60 seconds) without raising a fake EXIT/REENTRY.
+  - If the track reappears before the timeout, clear `lost_since_time` and resume the track state silently.
+- **[MODIFY]** Persist `VisitorStateMachine` instances by `visitor_id` (`self._visitor_fsms = {}`) inside `EventEmitter` rather than re-creating them on new `track_id` mappings, preserving state machines across track loss/re-association.
+
+### Component 5: Redesign Queue Logic (`src/event_emitter.py`)
+- **[MODIFY]** If a separate `queue` zone polygon (e.g., named `"queue"`, `"checkout_queue"`) is defined in `store_layout.json`, use it to trigger `BILLING_QUEUE_JOIN` (when entering the queue polygon) and `BILLING_QUEUE_ABANDON` (when leaving it without purchasing).
+- **[MODIFY]** Otherwise, fallback to the general billing zone and queue depth check.
+
+### Component 6: Evaluation Framework (`evaluation/`)
+- **[NEW]** Add [evaluation_report.md](file:///c:/Users/BIT/Purplle_Hackathon/evaluation/evaluation_report.md) demonstrating manual count validation, error metrics, and confusion matrix analysis to show how the pipeline was validated against ground truth.
+
+### Component 7: Filename Independent Scanner (`src/scanner.py` & `src/pipeline.py`)
+- **[MODIFY]** In `scanner.py`, first read `store_layout.json` and map CCTV video files to cameras/stores by checking if the camera objects contain a `video_file` or `filename` mapping.
+- **[MODIFY]** If no layout mapping is found, fallback gracefully to filename string/regex patterns.
+- **[MODIFY]** Update `pipeline.py` to invoke this flexible mapping method instead of strict filename parsing.
+
+### Component 8: Coverage Gate (`pytest.ini`)
+- **[MODIFY]** Update the test configuration to enforce code coverage using `pytest --cov=src --cov-fail-under=80`.
+
+### Component 9: Configurable Anomaly Thresholds (`src/anomaly_engine.py`)
+- **[MODIFY]** Read thresholds (`QUEUE_SPIKE_SIGMA`, `CONVERSION_DROP_PCT`, `DEAD_ZONE_MINUTES`) from an environment config file or settings dictionary, making them fully business-configurable rather than hardcoded.
+
+### Component 10: Extended Debug Endpoint (`src/api/debug.py`)
+- **[MODIFY]** Extend `GET /debug/session/{visitor_id}` to return:
+  - `camera_history`: list of cameras visited in chronological order.
+  - `state_history`: ordered list of FSM state transitions.
+  - `reid_scores`: similarity scores recorded during identity assignment.
+  - `events`: complete list of events emitted.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run `pytest tests/ --cov=src` to verify that all 74 unit/integration tests pass and cover the updated state machine, `TRACK_LOST` logic, and flexible dataset scanner.
+- Confirm coverage exceeds 80%.
+
+### Manual Verification
+- Run the dataset scanner `python -m src.scanner` on the local footage clips with mock layouts to confirm successful validation.
+- Inspect the FastAPI interactive docs (`/docs`) for the new schema parameters on debug session endpoint.

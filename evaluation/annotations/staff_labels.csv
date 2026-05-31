@@ -1,0 +1,13 @@
+track_id,camera,first_seen_frame,last_seen_frame,is_staff,staff_role,confidence,annotation_notes
+T002,CAM1,0,4193,True,Sales Associate,High,Present entire video; entered before store open at 09:45; uniform (blue shirt)
+T018,CAM2,0,3774,True,Sales Associate,High,Floor staff; present >80% of video duration; uniform visible
+T031,CAM3,0,4436,True,Cashier,High,Stationary at billing counter; minimal movement; uniform (white shirt)
+T001,CAM1,320,2100,False,Customer,High,Entered at ~10:40; browsed shelves; exited mid-video
+T003,CAM1,450,3800,False,Customer,High,Clear entry-exit arc; browsed multiple brand zones
+T004,CAM1,600,4100,False,Customer,Medium,Spent significant time near Lakme display
+T005,CAM2,200,2500,False,Customer,High,Entered floor area; dwell near Minimalist shelf
+T006,CAM2,380,3400,False,Customer,High,Moved between zones; visited billing area
+T007,CAM1,180,1900,False,Customer,High,Quick visit; entry to exit in ~57 seconds
+T008,CAM2,900,3600,False,Customer,Medium,Extended dwell; possible browser
+T009,CAM1,1200,4000,False,Customer,High,Purchased; seen at billing counter in CAM3 cross-reference
+T010,CAM2,1400,2800,False,Customer,Medium,Visited floor area only; exited without billing

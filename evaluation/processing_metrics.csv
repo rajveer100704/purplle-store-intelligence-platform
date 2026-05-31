@@ -1,0 +1,6 @@
+Metric,Value,Unit
+FPS_Avg,18.2,frames/sec
+Peak_RAM,984.5,MB
+API_Latency_Avg,24.1,ms
+Startup_Time,4.1,seconds
+Total_Processing_Time,122.4,seconds

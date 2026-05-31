@@ -1,0 +1,11 @@
+img1,img2,same_person
+crop_001_1.jpg,crop_001_2.jpg,1
+crop_001_1.jpg,crop_002_1.jpg,0
+crop_002_1.jpg,crop_002_2.jpg,1
+crop_002_1.jpg,crop_003_1.jpg,0
+crop_003_1.jpg,crop_003_2.jpg,1
+crop_001_2.jpg,crop_003_2.jpg,0
+crop_004_1.jpg,crop_004_2.jpg,1
+crop_004_1.jpg,crop_005_1.jpg,0
+crop_005_1.jpg,crop_005_2.jpg,1
+crop_005_2.jpg,crop_001_1.jpg,0

@@ -1,0 +1,16 @@
+reid_pair_id,track_id_a,cam_a,frame_a,track_id_b,cam_b,frame_b,same_identity,similarity_score,note
+P001,T001,CAM1,42,T012,CAM2,198,True,0.82,Same person: entered via CAM1 then moved to floor area CAM2
+P002,T002,CAM1,87,T018,CAM3,312,True,0.79,Same person: browsed shelves then moved to billing area
+P003,T003,CAM1,120,T025,CAM2,445,False,0.61,Different people: similar clothing (beige top)
+P004,T004,CAM1,156,T031,CAM3,512,True,0.88,Same person: confident match - distinct red jacket
+P005,T005,CAM2,65,T038,CAM3,280,False,0.58,Different people: both wearing dark clothing
+P006,T006,CAM2,95,T042,CAM3,310,True,0.76,Same person: borderline match - flagged uncertain_reid=True
+P007,T007,CAM1,210,T045,CAM2,512,True,0.91,Same person: highly confident - distinct striped shirt
+P008,T008,CAM2,180,T048,CAM3,390,False,0.53,Different people: both female, similar height
+P009,T009,CAM1,300,T051,CAM3,450,True,0.84,Same person: entered then browsed billing area
+P010,T010,CAM1,350,T055,CAM2,580,False,0.48,Different people: different body types
+P011,T011,CAM2,120,T058,CAM3,320,True,0.77,Same person: marginal match - flagged uncertain_reid=True
+P012,T013,CAM1,89,T062,CAM2,220,False,0.67,Different people: possible confusion near entry
+P013,T014,CAM1,144,T067,CAM2,480,True,0.85,Same person: confident cross-camera match
+P014,T015,CAM2,200,T071,CAM3,350,False,0.55,Different people: both wearing uniforms (staff area)
+P015,T016,CAM1,270,T074,CAM2,600,True,0.80,Same person: confident match

@@ -1,0 +1,23 @@
+{
+  "store_id": "S1",
+  "videos": [
+    {
+      "filename": "CAM 1.mp4",
+      "manual_entries": 38,
+      "manual_exits": 36,
+      "staff_appearances": 4
+    },
+    {
+      "filename": "CAM 2.mp4",
+      "manual_entries": 12,
+      "manual_exits": 11,
+      "staff_appearances": 2
+    },
+    {
+      "filename": "CAM 3.mp4",
+      "manual_entries": 18,
+      "manual_exits": 17,
+      "staff_appearances": 3
+    }
+  ]
+}

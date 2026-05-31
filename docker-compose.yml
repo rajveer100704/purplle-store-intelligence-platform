@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: store_intelligence_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - db_data:/app/store_intelligence.db
+      - ./output:/app/output
+      # Mount your CCTV footage (read-only). Adjust path as needed.
+      - "${CCTV_DATA_PATH:-./data}:/app/data:ro"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////app/store_intelligence.db
+      - YOLO_MODEL=yolov8s.pt
+      - YOLO_CONF=0.25
+      - YOLO_DEVICE=cpu
+      - REID_MATCH_THRESHOLD=0.75
+      - REID_NEW_ID_THRESHOLD=0.55
+      - STAFF_SCORE_THRESHOLD=3
+      - STORE_OPEN_HOUR=9
+      - STALE_FEED_MINUTES=10
+      - DEBUG=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  dashboard:
+    build: .
+    container_name: store_intelligence_dashboard
+    command: >
+      streamlit run dashboard/app.py
+      --server.port 8501
+      --server.address 0.0.0.0
+      --server.headless true
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:

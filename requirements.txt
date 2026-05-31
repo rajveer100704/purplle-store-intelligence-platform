@@ -1,0 +1,45 @@
+# ─── Core Vision ──────────────────────────────────────────────────────────────
+ultralytics>=8.2.0          # YOLOv8s detection
+supervision>=0.21.0          # ByteTrack multi-object tracker
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+Pillow>=10.3.0
+
+# ─── ReID ─────────────────────────────────────────────────────────────────────
+torchreid
+
+torch>=2.2.0
+torchvision>=0.17.0
+
+# ─── Geometry ─────────────────────────────────────────────────────────────────
+shapely>=2.0.4               # Polygon zone membership tests
+
+# ─── API ──────────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+
+# ─── Database ─────────────────────────────────────────────────────────────────
+sqlalchemy>=2.0.30
+aiosqlite>=0.20.0            # Async SQLite driver for FastAPI
+
+# ─── Data Processing ──────────────────────────────────────────────────────────
+pandas>=2.2.2
+python-dateutil>=2.9.0
+
+# ─── Dashboard ────────────────────────────────────────────────────────────────
+streamlit>=1.35.0
+plotly>=5.22.0
+requests>=2.32.0
+
+# ─── Testing ──────────────────────────────────────────────────────────────────
+pytest>=8.2.0
+pytest-asyncio>=0.23.7
+httpx>=0.27.0                # Async test client for FastAPI
+
+# ─── Dev / Utilities ──────────────────────────────────────────────────────────
+python-dotenv>=1.0.1
+rich>=13.7.1                 # Pretty CLI output
+tqdm>=4.66.4
+ffmpeg-python>=0.2.0

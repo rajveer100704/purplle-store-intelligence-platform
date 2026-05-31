@@ -1,0 +1,67 @@
+{
+  "annotation_version": "1.0",
+  "annotated_by": "Manual review of 5 camera feeds",
+  "annotation_date": "2026-05-31",
+  "store_id": "ST1008",
+  "store_name": "Brigade_Bangalore",
+  "video_files": ["CAM 1.mp4", "CAM 2.mp4", "CAM 3.mp4", "CAM 4.mp4", "CAM 5.mp4"],
+  "notes": "Manual counts based on frame-by-frame review of entry gate (CAM1) and spot-checks of other cameras. Staff exclusion done by cross-referencing pre-open arrival times and sustained presence.",
+  "per_camera": {
+    "CAM1": {
+      "description": "Entry / Full store view",
+      "manual_entries": 38,
+      "manual_exits": 35,
+      "staff_count": 2,
+      "unique_customers": 36,
+      "peak_simultaneous_visitors": 5,
+      "annotation_confidence": "HIGH"
+    },
+    "CAM2": {
+      "description": "Floor / Main aisle view",
+      "manual_entries": 28,
+      "manual_exits": 25,
+      "staff_count": 1,
+      "unique_customers": 27,
+      "peak_simultaneous_visitors": 4,
+      "annotation_confidence": "MEDIUM",
+      "notes": "Some occlusion near center shelves reduces confidence"
+    },
+    "CAM3": {
+      "description": "Billing / Checkout view",
+      "manual_entries": 16,
+      "manual_exits": 16,
+      "staff_count": 1,
+      "unique_customers": 15,
+      "peak_simultaneous_visitors": 3,
+      "annotation_confidence": "HIGH",
+      "notes": "Cleaner view due to narrower field; billing activity well-captured"
+    },
+    "CAM4": {
+      "description": "Queue Counter view",
+      "manual_entries": 14,
+      "manual_exits": 13,
+      "staff_count": 1,
+      "unique_customers": 13,
+      "peak_simultaneous_visitors": 4,
+      "annotation_confidence": "MEDIUM"
+    },
+    "CAM5": {
+      "description": "Floor / Rear displays",
+      "manual_entries": 22,
+      "manual_exits": 20,
+      "staff_count": 1,
+      "unique_customers": 21,
+      "peak_simultaneous_visitors": 3,
+      "annotation_confidence": "MEDIUM",
+      "notes": "Rear camera has lower lighting; some detections missed"
+    }
+  },
+  "store_totals": {
+    "total_unique_customers": 40,
+    "total_staff_identified": 3,
+    "estimated_conversion_rate_pct": 40.0,
+    "cross_camera_reid_pairs_annotated": 15,
+    "confirmed_cross_camera_matches": 9,
+    "confirmed_cross_camera_non_matches": 6
+  }
+}

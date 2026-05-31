@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-05-31T12:44:05.309244+00:00",
+  "event_counts": {
+    "ENTRY": 131,
+    "ZONE_ENTER": 79,
+    "ZONE_EXIT": 23,
+    "EXIT": 87,
+    "ZONE_DWELL": 6
+  },
+  "unique_visitors": 131,
+  "customers": 131,
+  "staff": 0,
+  "matched_pos_transactions": 0
+}
