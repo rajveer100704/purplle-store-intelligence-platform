@@ -1,8 +1,17 @@
-# Store Intelligence API
+# Store Intelligence API & Dashboard
 
 Real-time retail analytics powered by CCTV video processing.
 
-## 5-Step Setup
+---
+
+### 🌐 View Hosted Live Dashboard (No Setup Required)
+You can view the fully populated, production-ready dashboard instantly on Streamlit Community Cloud:
+👉 **[Live App Link](https://purplle-store-intelligence-platform-auydydswabnuuscjznvlpd.streamlit.app)**
+*(Select **`ST1008`** in the left sidebar dropdown to load the Brigade Road store data).*
+
+---
+
+## 5-Step Setup (Local Development)
 
 ### Step 1 – Clone the repository
 ```bash

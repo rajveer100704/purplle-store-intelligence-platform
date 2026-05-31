@@ -26,17 +26,20 @@ This platform converts raw CCTV footage from 5 cameras into **brand-level retail
 
 ## Quick Start
 
+### 🌐 View Hosted Live Dashboard (No Setup Required)
+You can view the fully populated, production-ready dashboard instantly on Streamlit Community Cloud:
+👉 **[Live App Link](https://purplle-store-intelligence-platform-auydydswabnuuscjznvlpd.streamlit.app)**
+*(Select **`ST1008`** in the left sidebar dropdown to load the Brigade Road store data).*
+
+### 💻 Run Locally
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Run one-command demo (synthetic data, POS-aligned)
+# Run E2E pipeline & compile validation reports
 python scripts/run_demo.py
 
-# Run real pipeline on CCTV footage
-python -m src.pipeline --data "PATH_TO_CCTV" --output results/real_events.jsonl --skip-frames 10
-
-# Start API + Dashboard
+# Start API + Local Dashboard
 uvicorn src.api.main:app --port 8000 &
 streamlit run dashboard/app.py
 ```
