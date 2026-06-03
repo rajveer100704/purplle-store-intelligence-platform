@@ -51,7 +51,20 @@ pip install -r requirements.txt
 uvicorn src.api.main:app --reload --port 8000
 ```
 
-### Step 4 – Run the detection pipeline
+### Step 4 – Run the E2E Demo Orchestrator & Validator
+To quickly validate the entire pipeline, run the master orchestrator script:
+```bash
+python scripts/run_demo.py
+```
+This script will automatically:
+- Scan the CCTV video dataset and run camera validations.
+- Perform ReID threshold empirical sweep calibration.
+- **Automatically rebuild the local SQLite database (`store_intelligence.db`)** if it is missing, and populate it with simulated customer journeys matched against real POS transaction logs.
+- Run the real CCTV validators for all 3 stores (`ST1008`, `STORE_1`, and `STORE_2`).
+- Generate comparative cross-store analytics and compile all validation reports.
+- Populate dashboard metrics and copy screenshots.
+
+### Step 5 – Run the manual detection pipeline (Optional)
 ```bash
 # Scan dataset and validate
 python -m src.scanner --data "C:\Users\BIT\OneDrive\Documents\CCTV\CCTV Footage"
@@ -65,7 +78,7 @@ python -m src.pipeline --data "C:\Users\BIT\OneDrive\Documents\CCTV\CCTV Footage
 python -m src.pipeline --video path/to/video.mp4 --dry-run
 ```
 
-### Step 5 – Query the API
+### Step 6 – Query the API
 ```bash
 # Check system health
 curl http://localhost:8000/health | python -m json.tool

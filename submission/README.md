@@ -42,6 +42,7 @@ pip install -r requirements.txt
 
 # Run E2E pipeline & compile validation reports
 python scripts/run_demo.py
+# (Rebuilds store_intelligence.db locally if missing, runs calibration, and compiles all reports)
 
 # Start API + Local Dashboard
 uvicorn src.api.main:app --port 8000 &
