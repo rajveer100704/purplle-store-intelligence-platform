@@ -51,10 +51,16 @@ if LOCAL_DB_AVAILABLE:
     db_file = Path(project_root) / "store_intelligence.db"
     if not db_file.exists():
         try:
-            from scripts.generate_demo import run_demo
-            asyncio.run(run_demo())
+            from scripts.populate_all_stores import run_all
+            asyncio.run(run_all(skip_demo=False))
         except Exception:
-            pass
+            # Fallback to basic demo for ST1008 only
+            try:
+                from scripts.generate_demo import run_demo
+                asyncio.run(run_demo())
+            except Exception:
+                pass
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Configuration
