@@ -15,7 +15,9 @@ Auto-refreshes every 10 seconds.
 from __future__ import annotations
 
 import os
-import time
+import sqlite3
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 import json
@@ -25,49 +27,467 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-import sys
-
 # Add project root to sys.path to enable imports when running on Streamlit Cloud
 project_root = str(Path(__file__).parent.parent)
 if project_root not in sys.path:
-    sys.path.append(project_root)
+    sys.path.insert(0, project_root)
 
-import asyncio
+# ──────────────────────────────────────────────────────────────────────────────
+# Database path resolution
+# ──────────────────────────────────────────────────────────────────────────────
 
-# Try importing the local API logic for direct database fallback
-try:
-    from src.db.database import AsyncSessionLocal
-    from src.api.metrics import get_metrics
-    from src.api.funnel import get_funnel
-    from src.api.heatmap import get_heatmap
-    from src.api.anomalies import get_anomalies
-    from src.api.health import health_check
-    LOCAL_DB_AVAILABLE = True
-except Exception:
-    LOCAL_DB_AVAILABLE = False
+DB_PATH = Path(project_root) / "store_intelligence.db"
 
-# Auto-generate local SQLite database if missing (e.g. on Streamlit Cloud deployment)
-if LOCAL_DB_AVAILABLE:
-    db_file = Path(project_root) / "store_intelligence.db"
-    if not db_file.exists():
+
+def _get_db_conn() -> sqlite3.Connection:
+    """Return a synchronous SQLite connection. Works in any thread/async context."""
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _ensure_db_populated() -> None:
+    """
+    Run populate_all_stores.py as a subprocess if the DB is missing or empty.
+    Using subprocess avoids any asyncio event-loop conflicts with Streamlit.
+    """
+    if DB_PATH.exists():
+        # Check if STORE_1 events exist
         try:
-            from scripts.populate_all_stores import run_all
-            asyncio.run(run_all(skip_demo=False))
+            conn = _get_db_conn()
+            cur = conn.execute(
+                "SELECT COUNT(*) FROM events WHERE store_id='STORE_1'"
+            )
+            count = cur.fetchone()[0]
+            conn.close()
+            if count > 0:
+                return  # DB is already fully populated
         except Exception:
-            # Fallback to basic demo for ST1008 only
-            try:
-                from scripts.generate_demo import run_demo
-                asyncio.run(run_demo())
-            except Exception:
-                pass
+            pass  # DB might not have tables yet
+
+    # Run the populate script as a subprocess (no asyncio conflict)
+    script = Path(project_root) / "scripts" / "populate_all_stores.py"
+    if script.exists():
+        try:
+            subprocess.run(
+                [sys.executable, str(script), "--skip-demo"],
+                cwd=project_root,
+                timeout=120,
+                capture_output=True,
+            )
+        except Exception:
+            pass
+    # If the script fails, also run generate_demo for ST1008 as final fallback
+    demo_script = Path(project_root) / "scripts" / "generate_demo.py"
+    if demo_script.exists() and not DB_PATH.exists():
+        try:
+            subprocess.run(
+                [sys.executable, str(demo_script)],
+                cwd=project_root,
+                timeout=120,
+                capture_output=True,
+            )
+        except Exception:
+            pass
+
+
+# Ensure DB is populated at startup (before any queries)
+_ensure_db_populated()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Configuration
+# Synchronous query helpers – bypass async entirely for Streamlit compatibility
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _query_metrics(store_id: str) -> dict:
+    """Compute metrics for a store directly via synchronous SQLite."""
+    try:
+        conn = _get_db_conn()
+        c = conn.cursor()
+
+        # Footfall: unique non-staff ENTRY events
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='ENTRY'",
+            (store_id,),
+        )
+        footfall = c.fetchone()[0] or 0
+
+        # Unique visitors
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0",
+            (store_id,),
+        )
+        unique_visitors = c.fetchone()[0] or 0
+
+        # Check if POS data exists for this store
+        c.execute(
+            "SELECT COUNT(*) FROM pos_transactions WHERE store_id=? AND matched=1",
+            (store_id,),
+        )
+        matched_pos = c.fetchone()[0] or 0
+
+        if matched_pos > 0:
+            # POS-matched conversion
+            c.execute(
+                "SELECT COUNT(DISTINCT visitor_id) FROM pos_transactions "
+                "WHERE store_id=? AND matched=1",
+                (store_id,),
+            )
+            purchased = c.fetchone()[0] or 0
+            conversion_rate = (purchased / unique_visitors * 100) if unique_visitors else 0.0
+
+            # Total matched revenue
+            c.execute(
+                "SELECT SUM(amount) FROM pos_transactions WHERE store_id=? AND matched=1",
+                (store_id,),
+            )
+            total_revenue = c.fetchone()[0] or 0.0
+        else:
+            # Queue-based proxy conversion
+            c.execute(
+                "SELECT COUNT(DISTINCT visitor_id) FROM events "
+                "WHERE store_id=? AND is_staff=0 AND event_type='BILLING_QUEUE_JOIN'",
+                (store_id,),
+            )
+            joined = c.fetchone()[0] or 0
+
+            c.execute(
+                "SELECT COUNT(DISTINCT visitor_id) FROM events "
+                "WHERE store_id=? AND is_staff=0 AND event_type='BILLING_QUEUE_ABANDON'",
+                (store_id,),
+            )
+            abandoned = c.fetchone()[0] or 0
+
+            purchased = max(0, joined - abandoned)
+            conversion_rate = (purchased / unique_visitors * 100) if unique_visitors else 0.0
+            total_revenue = None
+
+        # Queue depth
+        c.execute(
+            "SELECT COUNT(*) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='BILLING_QUEUE_JOIN'",
+            (store_id,),
+        )
+        join_count = c.fetchone()[0] or 0
+
+        c.execute(
+            "SELECT COUNT(*) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='BILLING_QUEUE_ABANDON'",
+            (store_id,),
+        )
+        abandon_count = c.fetchone()[0] or 0
+
+        queue_depth = max(0, join_count - abandon_count)
+        abandonment_rate = (abandon_count / join_count * 100) if join_count else 0.0
+
+        # Avg dwell per zone
+        c.execute(
+            "SELECT zone_id, AVG(dwell_ms) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='ZONE_DWELL' "
+            "AND zone_id IS NOT NULL AND dwell_ms IS NOT NULL "
+            "GROUP BY zone_id",
+            (store_id,),
+        )
+        avg_dwell_per_zone = {
+            row[0]: round((row[1] or 0) / 1000, 1)
+            for row in c.fetchall()
+        }
+
+        conn.close()
+        return {
+            "store_id": store_id,
+            "footfall": footfall,
+            "unique_visitors": unique_visitors,
+            "conversion_rate": round(conversion_rate, 2),
+            "avg_dwell_per_zone": avg_dwell_per_zone,
+            "queue_depth": queue_depth,
+            "abandonment_rate": round(abandonment_rate, 2),
+            "total_revenue": total_revenue,
+            "brand_conversion": {},
+        }
+    except Exception as e:
+        return {}
+
+
+def _query_funnel(store_id: str) -> dict:
+    """Compute customer journey funnel for a store."""
+    try:
+        conn = _get_db_conn()
+        c = conn.cursor()
+
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='ENTRY'",
+            (store_id,),
+        )
+        entry = c.fetchone()[0] or 0
+
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='ZONE_ENTER'",
+            (store_id,),
+        )
+        zone_visit = c.fetchone()[0] or 0
+
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='BILLING_QUEUE_JOIN'",
+            (store_id,),
+        )
+        billing = c.fetchone()[0] or 0
+
+        # Purchase = billing queue joiners who didn't abandon
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='BILLING_QUEUE_ABANDON'",
+            (store_id,),
+        )
+        abandoned = c.fetchone()[0] or 0
+
+        # Also check POS-matched
+        c.execute(
+            "SELECT COUNT(DISTINCT visitor_id) FROM pos_transactions "
+            "WHERE store_id=? AND matched=1",
+            (store_id,),
+        )
+        pos_purchased = c.fetchone()[0] or 0
+
+        purchase = pos_purchased if pos_purchased > 0 else max(0, billing - abandoned)
+
+        conn.close()
+        d1 = entry - zone_visit
+        d2 = zone_visit - billing
+        d3 = billing - purchase
+        return {
+            "store_id": store_id,
+            "entry": entry,
+            "zone_visit": zone_visit,
+            "billing": billing,
+            "purchase": purchase,
+            "dropoff": {
+                "entry_to_zone": d1,
+                "zone_to_billing": d2,
+                "billing_to_purchase": d3,
+            },
+        }
+    except Exception:
+        return {}
+
+
+def _query_heatmap(store_id: str) -> dict:
+    """Compute zone engagement heatmap for a store."""
+    try:
+        conn = _get_db_conn()
+        c = conn.cursor()
+
+        # Visit counts per zone
+        c.execute(
+            "SELECT zone_id, COUNT(DISTINCT visitor_id) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='ZONE_ENTER' "
+            "AND zone_id IS NOT NULL GROUP BY zone_id",
+            (store_id,),
+        )
+        visits_by_zone = {row[0]: row[1] for row in c.fetchall()}
+
+        # Avg dwell per zone
+        c.execute(
+            "SELECT zone_id, AVG(dwell_ms) FROM events "
+            "WHERE store_id=? AND is_staff=0 AND event_type='ZONE_DWELL' "
+            "AND zone_id IS NOT NULL AND dwell_ms IS NOT NULL GROUP BY zone_id",
+            (store_id,),
+        )
+        dwell_by_zone = {row[0]: (row[1] or 0.0) / 1000 for row in c.fetchall()}
+        conn.close()
+
+        all_zones = set(visits_by_zone) | set(dwell_by_zone)
+        if not all_zones:
+            return {"store_id": store_id, "zones": {}}
+
+        max_visits = max(visits_by_zone.values(), default=1)
+        max_dwell = max(dwell_by_zone.values(), default=1.0)
+
+        # Load brand map for this specific store
+        brand_map = _get_brand_map(store_id)
+
+        zones = {}
+        for zone_id in sorted(all_zones):
+            visits = visits_by_zone.get(zone_id, 0)
+            avg_dwell_s = round(dwell_by_zone.get(zone_id, 0.0), 1)
+            visit_norm = (visits / max_visits) if max_visits else 0
+            dwell_norm = (avg_dwell_s / (max_dwell + 1e-6)) if max_dwell else 0
+            score = int((0.4 * visit_norm + 0.6 * dwell_norm) * 100)
+            zones[zone_id] = {
+                "visits": visits,
+                "avg_dwell_s": avg_dwell_s,
+                "score": score,
+                "brand": brand_map.get(zone_id),
+            }
+
+        return {"store_id": store_id, "zones": zones}
+    except Exception:
+        return {"store_id": store_id, "zones": {}}
+
+
+def _query_anomalies(store_id: str) -> dict:
+    """Compute anomalies for a store using the correct store's zone IDs."""
+    try:
+        conn = _get_db_conn()
+        c = conn.cursor()
+
+        # Discover zone IDs for THIS specific store only
+        c.execute(
+            "SELECT DISTINCT zone_id FROM events "
+            "WHERE store_id=? AND is_staff=0 AND zone_id IS NOT NULL",
+            (store_id,),
+        )
+        zone_ids = [row[0] for row in c.fetchall()]
+        conn.close()
+
+        if not zone_ids:
+            return {"store_id": store_id, "anomalies": []}
+
+        from src.anomaly_engine import AnomalyEngine
+        engine = AnomalyEngine(store_id=store_id, zone_ids=zone_ids)
+
+        # Feed zone last-activity timestamps
+        conn = _get_db_conn()
+        c = conn.cursor()
+        for zone_id in zone_ids:
+            c.execute(
+                "SELECT MAX(timestamp) FROM events "
+                "WHERE store_id=? AND zone_id=? AND is_staff=0",
+                (store_id, zone_id),
+            )
+            last_ts_str = c.fetchone()[0]
+            if last_ts_str:
+                try:
+                    from datetime import timezone
+                    last_ts = datetime.fromisoformat(str(last_ts_str))
+                    if last_ts.tzinfo is None:
+                        last_ts = last_ts.replace(tzinfo=timezone.utc)
+                    engine.update_zone_activity(zone_id, last_ts.timestamp())
+                except Exception:
+                    pass
+
+        # Feed queue depth history
+        c.execute(
+            "SELECT timestamp, event_type FROM events "
+            "WHERE store_id=? AND is_staff=0 "
+            "AND event_type IN ('BILLING_QUEUE_JOIN', 'BILLING_QUEUE_ABANDON') "
+            "ORDER BY timestamp",
+            (store_id,),
+        )
+        depth = 0
+        for ts_str, etype in c.fetchall():
+            try:
+                from datetime import timezone
+                ts = datetime.fromisoformat(str(ts_str))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                if etype == "BILLING_QUEUE_JOIN":
+                    depth += 1
+                else:
+                    depth = max(0, depth - 1)
+                engine.update_queue_depth(depth, ts.timestamp())
+            except Exception:
+                pass
+
+        conn.close()
+
+        raw = engine.detect()
+        anomalies = [
+            {
+                "type": a["type"],
+                "severity": a.get("severity", "INFO"),
+                "store_id": store_id,
+                "action": a.get("action", ""),
+            }
+            for a in raw
+        ]
+        return {"store_id": store_id, "anomalies": anomalies}
+    except Exception as e:
+        return {"store_id": store_id, "anomalies": []}
+
+
+def _get_brand_map(store_id: str) -> dict:
+    """Load brand map for a specific store from store_config.json."""
+    try:
+        from src.layout.parser import load_store_config
+        config_path = Path(project_root) / "src" / "layout" / "store_config.json"
+        config = load_store_config(str(config_path), store_id)
+        return config.zone_brand_map() if config else {}
+    except Exception:
+        return {}
+
+
+def _query_health() -> dict:
+    """Health check via synchronous SQLite."""
+    try:
+        conn = _get_db_conn()
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM events")
+        total = c.fetchone()[0] or 0
+
+        c.execute(
+            "SELECT store_id, MAX(timestamp) FROM events GROUP BY store_id"
+        )
+        last_per_store = {row[0]: row[1] for row in c.fetchall()}
+        conn.close()
+        return {
+            "status": "OK",
+            "db_event_count": total,
+            "last_event_per_store": last_per_store,
+            "stale_feeds": [],
+        }
+    except Exception:
+        return {"status": "UNKNOWN", "db_event_count": 0}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# API helper – try HTTP first, fall back to direct sync DB queries
 # ──────────────────────────────────────────────────────────────────────────────
 
 API_BASE = os.environ.get("API_BASE_URL", "http://localhost:8000")
 REFRESH_SECONDS = 10
+
+
+def api_get(path: str) -> dict | None:
+    """Try FastAPI HTTP, then fall back to direct synchronous SQLite queries."""
+    # First attempt: HTTP to FastAPI backend
+    try:
+        r = requests.get(f"{API_BASE}{path}", timeout=2)
+        r.raise_for_status()
+        return r.json()
+    except Exception:
+        pass
+
+    # Second attempt: synchronous direct SQLite query (no asyncio, no event loop issues)
+    try:
+        if path == "/health":
+            return _query_health()
+        elif path.startswith("/stores/") and path.endswith("/metrics"):
+            sid = path.split("/")[2]
+            return _query_metrics(sid)
+        elif path.startswith("/stores/") and path.endswith("/funnel"):
+            sid = path.split("/")[2]
+            return _query_funnel(sid)
+        elif path.startswith("/stores/") and path.endswith("/heatmap"):
+            sid = path.split("/")[2]
+            return _query_heatmap(sid)
+        elif path.startswith("/stores/") and path.endswith("/anomalies"):
+            sid = path.split("/")[2]
+            return _query_anomalies(sid)
+    except Exception:
+        pass
+
+    return None
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Streamlit page config
+# ──────────────────────────────────────────────────────────────────────────────
 
 st.set_page_config(
     page_title="Store Intelligence Dashboard",
@@ -75,49 +495,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# ──────────────────────────────────────────────────────────────────────────────
-# API helpers
-# ──────────────────────────────────────────────────────────────────────────────
-
-def api_get(path: str) -> dict | None:
-    # First attempt: HTTP request to FastAPI backend
-    try:
-        r = requests.get(f"{API_BASE}{path}", timeout=2)
-        r.raise_for_status()
-        return r.json()
-    except Exception as http_err:
-        # Second attempt: Direct SQLite DB queries via imports (Standalone Mode)
-        if LOCAL_DB_AVAILABLE:
-            try:
-                async def run_query():
-                    async with AsyncSessionLocal() as db:
-                        if path == "/health":
-                            res = await health_check(db)
-                            return json.loads(res.model_dump_json())
-                        elif path.startswith("/stores/") and path.endswith("/metrics"):
-                            store_id = path.split("/")[2]
-                            res = await get_metrics(store_id, db)
-                            return json.loads(res.model_dump_json())
-                        elif path.startswith("/stores/") and path.endswith("/funnel"):
-                            store_id = path.split("/")[2]
-                            res = await get_funnel(store_id, db)
-                            return json.loads(res.model_dump_json())
-                        elif path.startswith("/stores/") and path.endswith("/heatmap"):
-                            store_id = path.split("/")[2]
-                            res = await get_heatmap(store_id, db)
-                            return json.loads(res.model_dump_json())
-                        elif path.startswith("/stores/") and path.endswith("/anomalies"):
-                            store_id = path.split("/")[2]
-                            res = await get_anomalies(store_id, db)
-                            return json.loads(res.model_dump_json())
-                return asyncio.run(run_query())
-            except Exception as db_err:
-                st.sidebar.error(f"Local DB query error: {db_err}")
-                return None
-        st.sidebar.error(f"API unreachable and no local DB fallback: {http_err}")
-        return None
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Sidebar – store selector & health
@@ -208,7 +585,7 @@ with tab_live:
         st.subheader("🔽 Customer Journey Funnel")
         funnel = api_get(f"/stores/{selected_store}/funnel") or {}
 
-        if funnel:
+        if funnel and funnel.get("entry", 0) > 0:
             stages = ["Entry", "Zone Visit", "Billing", "Purchase"]
             values = [
                 funnel.get("entry", 0),
@@ -406,8 +783,7 @@ with tab_cross:
         )
 
 # ── Auto-refresh ──────────────────────────────────────────────────────────────
-st.markdown("---")
-st.caption(f"Auto-refreshing every {REFRESH_SECONDS}s · API: {API_BASE}")
 
+import time
 time.sleep(REFRESH_SECONDS)
 st.rerun()
