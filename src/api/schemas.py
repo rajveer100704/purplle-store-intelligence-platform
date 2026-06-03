@@ -173,3 +173,23 @@ class HealthResponse(BaseModel):
     )
     db_event_count: int
     checked_at: datetime
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Stores list response
+# ──────────────────────────────────────────────────────────────────────────────
+
+class StoreInfo(BaseModel):
+    store_id: str
+    store_name: str
+    city: str
+    pos_available: bool = Field(..., description="Whether this store has POS data")
+    camera_count: int
+    entry_cameras: list[str] = Field(default_factory=list)
+    zone_cameras: list[str] = Field(default_factory=list)
+    billing_cameras: list[str] = Field(default_factory=list)
+
+
+class StoreListResponse(BaseModel):
+    stores: list[StoreInfo]
+    total: int

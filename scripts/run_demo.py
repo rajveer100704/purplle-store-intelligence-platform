@@ -71,7 +71,19 @@ def main():
     # Step 5: Run real dataset validation report (real_run_report.md)
     run_cmd(
         [sys.executable, "scripts/generate_real_validation.py"],
-        "Real Run Validator"
+        "Real Run Validator (ST1008)"
+    )
+    run_cmd(
+        [sys.executable, "scripts/generate_real_validation.py", "--store", "STORE_1"],
+        "Real Run Validator (STORE_1)"
+    )
+    run_cmd(
+        [sys.executable, "scripts/generate_real_validation.py", "--store", "STORE_2"],
+        "Real Run Validator (STORE_2)"
+    )
+    run_cmd(
+        [sys.executable, "scripts/run_cross_store_analysis.py"],
+        "Cross-Store Analytics Runner"
     )
 
     # Step 6: Setup submission directory
@@ -81,6 +93,11 @@ def main():
     # Copy generated summaries and reports to submission folder
     files_to_copy = [
         (workspace_root / "evaluation" / "real_run_report.md", submission_dir / "real_run_report.md"),
+        (workspace_root / "evaluation" / "ST1008_validation_report.md", submission_dir / "ST1008_validation_report.md"),
+        (workspace_root / "evaluation" / "STORE_1_validation_report.md", submission_dir / "STORE_1_validation_report.md"),
+        (workspace_root / "evaluation" / "STORE_2_validation_report.md", submission_dir / "STORE_2_validation_report.md"),
+        (workspace_root / "evaluation" / "cross_store_validation.md", submission_dir / "cross_store_validation.md"),
+        (workspace_root / "evaluation" / "store_coverage_report.md", submission_dir / "store_coverage_report.md"),
         (workspace_root / "demo" / "demo_summary.md", submission_dir / "demo_summary.md"),
     ]
     
@@ -89,7 +106,7 @@ def main():
             try:
                 import shutil
                 shutil.copy2(src, dst)
-                print(f"[OK] Copied {src.name} → submission/{dst.name}")
+                print(f"[OK] Copied {src.name} -> submission/{dst.name}")
             except Exception as e:
                 print(f"[WARN] Copy failed: {e}")
 
@@ -133,7 +150,7 @@ def main():
                         import shutil
                         shutil.copy2(f, submission_dir / target_name)
                         shutil.copy2(f, workspace_root / target_name)
-                        print(f"[OK] Copied {f.name} → submission/{target_name}")
+                        print(f"[OK] Copied {f.name} -> submission/{target_name}")
                         image_copied[target_name] = True
                     except Exception as e:
                         print(f"[WARN] Failed to copy image {f.name}: {e}")

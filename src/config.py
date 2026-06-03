@@ -30,3 +30,15 @@ STORE_CONFIG_PATH = os.environ.get("STORE_CONFIG_PATH", "src/layout/store_config
 POS_CSV_PATH = os.environ.get("POS_CSV_PATH", "data/pos_transactions.csv")
 POS_MATCH_WINDOW = float(os.environ.get("POS_MATCH_WINDOW", "300.0"))  # 5 minutes in seconds
 
+# ── Multi-Store Data Roots (set via env for each store) ───────────────────────
+# These point to the local directory containing footage for each store.
+# Leave empty if footage is not available on this machine.
+STORE_1_DATA_ROOT = os.environ.get("STORE_1_DATA_ROOT", "")
+STORE_2_DATA_ROOT = os.environ.get("STORE_2_DATA_ROOT", "")
+
+# Comma-separated list of all registered store IDs (used by /stores endpoint)
+REGISTERED_STORES = [
+    s.strip()
+    for s in os.environ.get("REGISTERED_STORES", "ST1008,STORE_1,STORE_2").split(",")
+    if s.strip()
+]

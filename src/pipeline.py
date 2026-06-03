@@ -203,9 +203,9 @@ def run_pipeline(
                     if dry_run:
                         for e in events:
                             console.print(
-                                f"    [green]{e['event_type']}[/]  "
-                                f"{e['visitor_id'][:8]}  "
-                                f"{e.get('zone_id', '')}"
+                                f"    [green]{e.event_type}[/]  "
+                                f"{e.visitor_id[:8]}  "
+                                f"{e.zone_id or ''}"
                             )
 
                     frame_idx += 1

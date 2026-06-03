@@ -4,6 +4,17 @@ Real-time retail analytics powered by CCTV video processing.
 
 ---
 
+### 🚀 Generalization Validation Summary
+*   **Physical Stores Validated**: 3 distinct retail layout locations
+*   **CCTV Camera Streams**: 13 active cameras processed
+*   **Code Changes Between Stores**: **0** (completely configured via `StoreRegistry` metadata)
+
+*   **Brigade Road (ST1008)**: 5 cameras, 131 unique visitors (manual brand polygons & POS-matched)
+*   **Store 1 (STORE_1)**: 4 cameras, 130 unique visitors (auto-generated zones & queue proxy)
+*   **Store 2 (STORE_2)**: 4 cameras, 111 unique visitors (auto-generated zones & queue proxy, dual entry)
+
+---
+
 ### 🌐 View Hosted Live Dashboard (No Setup Required)
 You can view the fully populated, production-ready dashboard instantly on Streamlit Community Cloud:
 👉 **[Live App Link](https://purplle-store-intelligence-platform-auydydswabnuuscjznvlpd.streamlit.app)**

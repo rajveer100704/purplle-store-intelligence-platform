@@ -7,40 +7,78 @@
       "cameras": [
         {
           "camera_id": "CAM1",
+          "role": "ENTRY",
           "description": "Entry / Full store view",
-          "frame_size": [1920, 1080],
-          "entry_line": [[50, 200], [50, 880]],
-          "exit_line": [[50, 200], [50, 880]],
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "exit_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
           "video_file": "CAM 1.mp4"
         },
         {
           "camera_id": "CAM2",
+          "role": "ZONE",
           "description": "Floor / Main aisle view",
-          "frame_size": [1920, 1080],
+          "frame_size": [
+            1920,
+            1080
+          ],
           "entry_line": null,
           "exit_line": null,
           "video_file": "CAM 2.mp4"
         },
         {
           "camera_id": "CAM3",
+          "role": "BILLING",
           "description": "Billing / Checkout view",
-          "frame_size": [1920, 1080],
+          "frame_size": [
+            1920,
+            1080
+          ],
           "entry_line": null,
           "exit_line": null,
           "video_file": "CAM 3.mp4"
         },
         {
           "camera_id": "CAM4",
+          "role": "QUEUE",
           "description": "Queue Counter view",
-          "frame_size": [1920, 1080],
+          "frame_size": [
+            1920,
+            1080
+          ],
           "entry_line": null,
           "exit_line": null,
           "video_file": "CAM 4.mp4"
         },
         {
           "camera_id": "CAM5",
+          "role": "ZONE",
           "description": "Floor / Rear displays",
-          "frame_size": [1920, 1080],
+          "frame_size": [
+            1920,
+            1080
+          ],
           "entry_line": null,
           "exit_line": null,
           "video_file": "CAM 5.mp4"
@@ -49,12 +87,46 @@
       "billing_zone": {
         "zone_id": "CASH_COUNTER",
         "type": "billing",
-        "polygon": [[0.82, 0.05], [0.97, 0.05], [0.97, 0.65], [0.82, 0.65]]
+        "polygon": [
+          [
+            0.82,
+            0.05
+          ],
+          [
+            0.97,
+            0.05
+          ],
+          [
+            0.97,
+            0.65
+          ],
+          [
+            0.82,
+            0.65
+          ]
+        ]
       },
       "queue_zone": {
         "zone_id": "QUEUE_AREA",
         "type": "queue",
-        "polygon": [[0.72, 0.15], [0.82, 0.15], [0.82, 0.55], [0.72, 0.55]]
+        "polygon": [
+          [
+            0.72,
+            0.15
+          ],
+          [
+            0.82,
+            0.15
+          ],
+          [
+            0.82,
+            0.55
+          ],
+          [
+            0.72,
+            0.55
+          ]
+        ]
       },
       "brand_zones": [
         {
@@ -62,136 +134,1012 @@
           "brand": "EB Korean",
           "wall": "top",
           "position": 0,
-          "polygon": [[0.10, 0.02], [0.18, 0.02], [0.18, 0.12], [0.10, 0.12]]
+          "polygon": [
+            [
+              0.1,
+              0.02
+            ],
+            [
+              0.18,
+              0.02
+            ],
+            [
+              0.18,
+              0.12
+            ],
+            [
+              0.1,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "THE_FACE_SHOP",
           "brand": "The Face Shop",
           "wall": "top",
           "position": 1,
-          "polygon": [[0.18, 0.02], [0.27, 0.02], [0.27, 0.12], [0.18, 0.12]]
+          "polygon": [
+            [
+              0.18,
+              0.02
+            ],
+            [
+              0.27,
+              0.02
+            ],
+            [
+              0.27,
+              0.12
+            ],
+            [
+              0.18,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "GOOD_VIBES",
           "brand": "Good Vibes",
           "wall": "top",
           "position": 2,
-          "polygon": [[0.27, 0.02], [0.37, 0.02], [0.37, 0.12], [0.27, 0.12]]
+          "polygon": [
+            [
+              0.27,
+              0.02
+            ],
+            [
+              0.37,
+              0.02
+            ],
+            [
+              0.37,
+              0.12
+            ],
+            [
+              0.27,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "DERMDOC",
           "brand": "DermDoc",
           "wall": "top",
           "position": 3,
-          "polygon": [[0.37, 0.02], [0.46, 0.02], [0.46, 0.12], [0.37, 0.12]]
+          "polygon": [
+            [
+              0.37,
+              0.02
+            ],
+            [
+              0.46,
+              0.02
+            ],
+            [
+              0.46,
+              0.12
+            ],
+            [
+              0.37,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "MINIMALIST",
           "brand": "Minimalist",
           "wall": "top",
           "position": 4,
-          "polygon": [[0.46, 0.02], [0.55, 0.02], [0.55, 0.12], [0.46, 0.12]]
+          "polygon": [
+            [
+              0.46,
+              0.02
+            ],
+            [
+              0.55,
+              0.02
+            ],
+            [
+              0.55,
+              0.12
+            ],
+            [
+              0.46,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "AQUALOGICA",
           "brand": "Aqualogica",
           "wall": "top",
           "position": 5,
-          "polygon": [[0.55, 0.02], [0.64, 0.02], [0.64, 0.12], [0.55, 0.12]]
+          "polygon": [
+            [
+              0.55,
+              0.02
+            ],
+            [
+              0.64,
+              0.02
+            ],
+            [
+              0.64,
+              0.12
+            ],
+            [
+              0.55,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "LAKME_SKIN",
           "brand": "Lakme Skin",
           "wall": "top",
           "position": 6,
-          "polygon": [[0.64, 0.02], [0.73, 0.02], [0.73, 0.12], [0.64, 0.12]]
+          "polygon": [
+            [
+              0.64,
+              0.02
+            ],
+            [
+              0.73,
+              0.02
+            ],
+            [
+              0.73,
+              0.12
+            ],
+            [
+              0.64,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "ACCESSORIES",
           "brand": "Accessories",
           "wall": "top",
           "position": 7,
-          "polygon": [[0.73, 0.02], [0.82, 0.02], [0.82, 0.12], [0.73, 0.12]]
+          "polygon": [
+            [
+              0.73,
+              0.02
+            ],
+            [
+              0.82,
+              0.02
+            ],
+            [
+              0.82,
+              0.12
+            ],
+            [
+              0.73,
+              0.12
+            ]
+          ]
         },
         {
           "zone_id": "MAYBELLINE",
           "brand": "Maybelline",
           "wall": "bottom",
           "position": 0,
-          "polygon": [[0.08, 0.88], [0.18, 0.88], [0.18, 0.98], [0.08, 0.98]]
+          "polygon": [
+            [
+              0.08,
+              0.88
+            ],
+            [
+              0.18,
+              0.88
+            ],
+            [
+              0.18,
+              0.98
+            ],
+            [
+              0.08,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "FACES_CANADA",
           "brand": "Faces Canada",
           "wall": "bottom",
           "position": 1,
-          "polygon": [[0.18, 0.88], [0.28, 0.88], [0.28, 0.98], [0.18, 0.98]]
+          "polygon": [
+            [
+              0.18,
+              0.88
+            ],
+            [
+              0.28,
+              0.88
+            ],
+            [
+              0.28,
+              0.98
+            ],
+            [
+              0.18,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "LAKME",
           "brand": "Lakme",
           "wall": "bottom",
           "position": 2,
-          "polygon": [[0.28, 0.88], [0.37, 0.88], [0.37, 0.98], [0.28, 0.98]]
+          "polygon": [
+            [
+              0.28,
+              0.88
+            ],
+            [
+              0.37,
+              0.88
+            ],
+            [
+              0.37,
+              0.98
+            ],
+            [
+              0.28,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "COLORBAR_SUGAR",
           "brand": "Colorbar + Sugar",
           "wall": "bottom",
           "position": 3,
-          "polygon": [[0.37, 0.88], [0.48, 0.88], [0.48, 0.98], [0.37, 0.98]]
+          "polygon": [
+            [
+              0.37,
+              0.88
+            ],
+            [
+              0.48,
+              0.88
+            ],
+            [
+              0.48,
+              0.98
+            ],
+            [
+              0.37,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "SWISS_BEAUTY",
           "brand": "Swiss Beauty",
           "wall": "bottom",
           "position": 4,
-          "polygon": [[0.48, 0.88], [0.57, 0.88], [0.57, 0.98], [0.48, 0.98]]
+          "polygon": [
+            [
+              0.48,
+              0.88
+            ],
+            [
+              0.57,
+              0.88
+            ],
+            [
+              0.57,
+              0.98
+            ],
+            [
+              0.48,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "RENEE_NYBAE",
           "brand": "Renee / NY Bae",
           "wall": "bottom",
           "position": 5,
-          "polygon": [[0.57, 0.88], [0.67, 0.88], [0.67, 0.98], [0.57, 0.98]]
+          "polygon": [
+            [
+              0.57,
+              0.88
+            ],
+            [
+              0.67,
+              0.88
+            ],
+            [
+              0.67,
+              0.98
+            ],
+            [
+              0.57,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "ALPS_GOODNESS",
           "brand": "Alps Goodness",
           "wall": "bottom",
           "position": 6,
-          "polygon": [[0.67, 0.88], [0.77, 0.88], [0.77, 0.98], [0.67, 0.98]]
+          "polygon": [
+            [
+              0.67,
+              0.88
+            ],
+            [
+              0.77,
+              0.88
+            ],
+            [
+              0.77,
+              0.98
+            ],
+            [
+              0.67,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "STREAX",
           "brand": "Streax",
           "wall": "bottom",
           "position": 7,
-          "polygon": [[0.77, 0.88], [0.85, 0.88], [0.85, 0.98], [0.77, 0.98]]
+          "polygon": [
+            [
+              0.77,
+              0.88
+            ],
+            [
+              0.85,
+              0.88
+            ],
+            [
+              0.85,
+              0.98
+            ],
+            [
+              0.77,
+              0.98
+            ]
+          ]
         },
         {
           "zone_id": "FOH",
           "brand": null,
           "type": "service_area",
-          "polygon": [[0.25, 0.20], [0.65, 0.20], [0.65, 0.75], [0.25, 0.75]]
+          "polygon": [
+            [
+              0.25,
+              0.2
+            ],
+            [
+              0.65,
+              0.2
+            ],
+            [
+              0.65,
+              0.75
+            ],
+            [
+              0.25,
+              0.75
+            ]
+          ]
         },
         {
           "zone_id": "FRAGRANCE",
           "brand": null,
           "type": "service_area",
-          "polygon": [[0.20, 0.25], [0.28, 0.25], [0.28, 0.55], [0.20, 0.55]]
+          "polygon": [
+            [
+              0.2,
+              0.25
+            ],
+            [
+              0.28,
+              0.25
+            ],
+            [
+              0.28,
+              0.55
+            ],
+            [
+              0.2,
+              0.55
+            ]
+          ]
         },
         {
           "zone_id": "NAIL_UNIT",
           "brand": null,
           "type": "service_area",
-          "polygon": [[0.28, 0.25], [0.35, 0.25], [0.35, 0.55], [0.28, 0.55]]
+          "polygon": [
+            [
+              0.28,
+              0.25
+            ],
+            [
+              0.35,
+              0.25
+            ],
+            [
+              0.35,
+              0.55
+            ],
+            [
+              0.28,
+              0.55
+            ]
+          ]
         },
         {
           "zone_id": "MAKEUP_UNIT",
           "brand": null,
           "type": "service_area",
-          "polygon": [[0.45, 0.25], [0.60, 0.25], [0.60, 0.55], [0.45, 0.55]]
+          "polygon": [
+            [
+              0.45,
+              0.25
+            ],
+            [
+              0.6,
+              0.25
+            ],
+            [
+              0.6,
+              0.55
+            ],
+            [
+              0.45,
+              0.55
+            ]
+          ]
+        }
+      ]
+    },
+    "STORE_1": {
+      "store_name": "Store_1",
+      "city": "Unknown",
+      "store_open_hour": 10,
+      "pos_available": false,
+      "data_root": "",
+      "cameras": [
+        {
+          "camera_id": "CAM3",
+          "role": "ENTRY",
+          "description": "Entry camera",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "exit_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "video_file": "CAM 3 - entry.mp4"
+        },
+        {
+          "camera_id": "CAM1",
+          "role": "ZONE",
+          "description": "Zone camera 1 \u00e2\u20ac\u201c main floor view",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": null,
+          "exit_line": null,
+          "video_file": "CAM 1 - zone.mp4"
+        },
+        {
+          "camera_id": "CAM2",
+          "role": "ZONE",
+          "description": "Zone camera 2 \u00e2\u20ac\u201c secondary floor view",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": null,
+          "exit_line": null,
+          "video_file": "CAM 2 - zone.mp4"
+        },
+        {
+          "camera_id": "CAM5",
+          "role": "BILLING",
+          "description": "Billing / checkout area",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": null,
+          "exit_line": null,
+          "video_file": "CAM 5 - billing.mp4"
+        }
+      ],
+      "billing_zone": {
+        "zone_id": "CASH_COUNTER",
+        "type": "billing",
+        "polygon": [
+          [
+            0.75,
+            0.05
+          ],
+          [
+            0.97,
+            0.05
+          ],
+          [
+            0.97,
+            0.65
+          ],
+          [
+            0.75,
+            0.65
+          ]
+        ]
+      },
+      "queue_zone": {
+        "zone_id": "QUEUE_AREA",
+        "type": "queue",
+        "polygon": [
+          [
+            0.6,
+            0.15
+          ],
+          [
+            0.75,
+            0.15
+          ],
+          [
+            0.75,
+            0.55
+          ],
+          [
+            0.6,
+            0.55
+          ]
+        ]
+      },
+      "brand_zones": [
+        {
+          "zone_id": "ZONE_A",
+          "brand": "ZONE_A",
+          "type": "zone",
+          "polygon": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.3333,
+              0.25
+            ],
+            [
+              0.3333,
+              0.5
+            ],
+            [
+              0.0,
+              0.5
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_B",
+          "brand": "ZONE_B",
+          "type": "zone",
+          "polygon": [
+            [
+              0.3333,
+              0.25
+            ],
+            [
+              0.6666,
+              0.25
+            ],
+            [
+              0.6666,
+              0.5
+            ],
+            [
+              0.3333,
+              0.5
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_C",
+          "brand": "ZONE_C",
+          "type": "zone",
+          "polygon": [
+            [
+              0.6666,
+              0.25
+            ],
+            [
+              0.9999,
+              0.25
+            ],
+            [
+              0.9999,
+              0.5
+            ],
+            [
+              0.6666,
+              0.5
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_D",
+          "brand": "ZONE_D",
+          "type": "zone",
+          "polygon": [
+            [
+              0.0,
+              0.5
+            ],
+            [
+              0.3333,
+              0.5
+            ],
+            [
+              0.3333,
+              0.75
+            ],
+            [
+              0.0,
+              0.75
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_E",
+          "brand": "ZONE_E",
+          "type": "zone",
+          "polygon": [
+            [
+              0.3333,
+              0.5
+            ],
+            [
+              0.6666,
+              0.5
+            ],
+            [
+              0.6666,
+              0.75
+            ],
+            [
+              0.3333,
+              0.75
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_F",
+          "brand": "ZONE_F",
+          "type": "zone",
+          "polygon": [
+            [
+              0.6666,
+              0.5
+            ],
+            [
+              0.9999,
+              0.5
+            ],
+            [
+              0.9999,
+              0.75
+            ],
+            [
+              0.6666,
+              0.75
+            ]
+          ]
+        }
+      ]
+    },
+    "STORE_2": {
+      "store_name": "Store_2",
+      "city": "Unknown",
+      "store_open_hour": 10,
+      "pos_available": false,
+      "data_root": "",
+      "cameras": [
+        {
+          "camera_id": "ENTRY_CAM1",
+          "role": "ENTRY",
+          "description": "Entry camera 1 \u00e2\u20ac\u201c primary entrance",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "exit_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "video_file": "entry 1.mp4"
+        },
+        {
+          "camera_id": "ENTRY_CAM2",
+          "role": "ENTRY",
+          "description": "Entry camera 2 \u00e2\u20ac\u201c secondary entrance",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "exit_line": [
+            [
+              50,
+              200
+            ],
+            [
+              50,
+              880
+            ]
+          ],
+          "video_file": "entry 2.mp4"
+        },
+        {
+          "camera_id": "ZONE_CAM1",
+          "role": "ZONE",
+          "description": "Zone camera \u00e2\u20ac\u201c main floor view",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": null,
+          "exit_line": null,
+          "video_file": "zone.mp4"
+        },
+        {
+          "camera_id": "BILLING_CAM1",
+          "role": "BILLING",
+          "description": "Billing area camera",
+          "frame_size": [
+            1920,
+            1080
+          ],
+          "entry_line": null,
+          "exit_line": null,
+          "video_file": "billing_area.mp4"
+        }
+      ],
+      "billing_zone": {
+        "zone_id": "CASH_COUNTER",
+        "type": "billing",
+        "polygon": [
+          [
+            0.75,
+            0.05
+          ],
+          [
+            0.97,
+            0.05
+          ],
+          [
+            0.97,
+            0.65
+          ],
+          [
+            0.75,
+            0.65
+          ]
+        ]
+      },
+      "queue_zone": {
+        "zone_id": "QUEUE_AREA",
+        "type": "queue",
+        "polygon": [
+          [
+            0.6,
+            0.15
+          ],
+          [
+            0.75,
+            0.15
+          ],
+          [
+            0.75,
+            0.55
+          ],
+          [
+            0.6,
+            0.55
+          ]
+        ]
+      },
+      "brand_zones": [
+        {
+          "zone_id": "ZONE_A",
+          "brand": "ZONE_A",
+          "type": "zone",
+          "polygon": [
+            [
+              0.0,
+              0.25
+            ],
+            [
+              0.3333,
+              0.25
+            ],
+            [
+              0.3333,
+              0.5
+            ],
+            [
+              0.0,
+              0.5
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_B",
+          "brand": "ZONE_B",
+          "type": "zone",
+          "polygon": [
+            [
+              0.3333,
+              0.25
+            ],
+            [
+              0.6666,
+              0.25
+            ],
+            [
+              0.6666,
+              0.5
+            ],
+            [
+              0.3333,
+              0.5
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_C",
+          "brand": "ZONE_C",
+          "type": "zone",
+          "polygon": [
+            [
+              0.6666,
+              0.25
+            ],
+            [
+              0.9999,
+              0.25
+            ],
+            [
+              0.9999,
+              0.5
+            ],
+            [
+              0.6666,
+              0.5
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_D",
+          "brand": "ZONE_D",
+          "type": "zone",
+          "polygon": [
+            [
+              0.0,
+              0.5
+            ],
+            [
+              0.3333,
+              0.5
+            ],
+            [
+              0.3333,
+              0.75
+            ],
+            [
+              0.0,
+              0.75
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_E",
+          "brand": "ZONE_E",
+          "type": "zone",
+          "polygon": [
+            [
+              0.3333,
+              0.5
+            ],
+            [
+              0.6666,
+              0.5
+            ],
+            [
+              0.6666,
+              0.75
+            ],
+            [
+              0.3333,
+              0.75
+            ]
+          ]
+        },
+        {
+          "zone_id": "ZONE_F",
+          "brand": "ZONE_F",
+          "type": "zone",
+          "polygon": [
+            [
+              0.6666,
+              0.5
+            ],
+            [
+              0.9999,
+              0.5
+            ],
+            [
+              0.9999,
+              0.75
+            ],
+            [
+              0.6666,
+              0.75
+            ]
+          ]
         }
       ]
     }

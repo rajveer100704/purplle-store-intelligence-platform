@@ -48,8 +48,9 @@ def generate_default_grid(
     """
     Generate default grid-based zone polygons from brand_zones metadata.
 
-    Divides zones along the top and bottom walls into equal-width strips.
-    This is a reasonable fallback when no manual calibration is performed.
+    For stores with brand_zones defined, divides top/bottom walls into strips.
+    For stores with empty brand_zones (e.g. STORE_1, STORE_2), generates a
+    uniform 3x2 grid of generic zones (ZONE_A through ZONE_F).
     """
     with open(config_path) as f:
         data = json.load(f)
@@ -57,9 +58,43 @@ def generate_default_grid(
     store = data["stores"].get(store_id)
     if not store:
         print(f"Store {store_id} not found in config.")
+        print(f"Available stores: {list(data['stores'].keys())}")
         return
 
     brand_zones = store.get("brand_zones", [])
+
+    # ── No brand zones: generate a uniform 3x2 grid ───────────────────────────
+    if not brand_zones:
+        print(f"[INFO] {store_id} has no brand_zones – generating uniform 3x2 grid.")
+        grid_zones = []
+        cols, rows = 3, 2
+        cell_w = round(1.0 / cols, 4)
+        cell_h = round(0.5 / rows, 4)  # use middle 50% of frame
+        y_start = 0.25  # skip top 25% (entry area)
+        labels = ["ZONE_A", "ZONE_B", "ZONE_C", "ZONE_D", "ZONE_E", "ZONE_F"]
+        idx = 0
+        for row in range(rows):
+            for col in range(cols):
+                x0 = round(col * cell_w, 4)
+                x1 = round(x0 + cell_w, 4)
+                y0 = round(y_start + row * cell_h, 4)
+                y1 = round(y0 + cell_h, 4)
+                grid_zones.append({
+                    "zone_id": labels[idx],
+                    "brand": labels[idx],
+                    "type": "zone",
+                    "polygon": [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
+                })
+                idx += 1
+        store["brand_zones"] = grid_zones
+        with open(config_path, "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"[OK] 3x2 grid zones generated for {store_id}")
+        print(f"     Zones: {[z['zone_id'] for z in grid_zones]}")
+        print(f"     Saved to {config_path}")
+        return
+
+    # ── Existing brand zones: top / bottom wall strips ────────────────────────
     top_zones = sorted(
         [z for z in brand_zones if z.get("wall") == "top"],
         key=lambda z: z.get("position", 0),
@@ -258,7 +293,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Zone Calibration Tool")
     parser.add_argument("--video", default=None, help="Path to video file")
     parser.add_argument("--camera", default="CAM1", help="Camera ID")
-    parser.add_argument("--store", default="ST1008", help="Store ID")
+    parser.add_argument("--store", default=None, help="Store ID (defaults to first store in config)")
     parser.add_argument(
         "--config",
         default=str(CONFIG_PATH),
@@ -269,23 +304,51 @@ if __name__ == "__main__":
         action="store_true",
         help="Generate default grid-based zones (no video needed)",
     )
+    parser.add_argument(
+        "--list-stores",
+        action="store_true",
+        help="List all stores registered in config and exit",
+    )
     args = parser.parse_args()
+
+    config_path_arg = Path(args.config)
+
+    if args.list_stores:
+        import json as _json
+        with open(config_path_arg) as _f:
+            _data = _json.load(_f)
+        print("Registered stores:")
+        for sid, sdata in _data.get("stores", {}).items():
+            cam_count = len(sdata.get("cameras", []))
+            pos = sdata.get("pos_available", True)
+            print(f"  {sid:12} cameras={cam_count}  pos_available={pos}")
+        sys.exit(0)
+
+    # Resolve store ID – default to first store in config
+    if args.store:
+        store_id_arg = args.store
+    else:
+        import json as _json
+        with open(config_path_arg) as _f:
+            _data = _json.load(_f)
+        store_id_arg = next(iter(_data.get("stores", {"ST1008": {}})))
+        print(f"[INFO] No --store specified, defaulting to: {store_id_arg}")
 
     if args.generate_defaults:
         generate_default_grid(
-            config_path=Path(args.config),
-            store_id=args.store,
+            config_path=config_path_arg,
+            store_id=store_id_arg,
         )
     elif args.video:
         interactive_calibrate(
             video_path=args.video,
             camera_id=args.camera,
-            store_id=args.store,
-            config_path=Path(args.config),
+            store_id=store_id_arg,
+            config_path=config_path_arg,
         )
     else:
         print("[INFO] No --video provided. Generating default grid zones.")
         generate_default_grid(
-            config_path=Path(args.config),
-            store_id=args.store,
+            config_path=config_path_arg,
+            store_id=store_id_arg,
         )

@@ -133,70 +133,78 @@ async def get_metrics(
 
     # ── Brand-level conversion and matched revenue computation ─────────────
     from ..layout.parser import load_store_config
-    from ..config import STORE_CONFIG_PATH, POS_CSV_PATH
-    from ..pos.parser import parse_pos_csv
+    from ..config import STORE_CONFIG_PATH
+    from ..store_registry import get_registry
 
-    # 1. Total matched revenue
-    rev_q = await db.execute(
-        select(func.sum(POSTransactionORM.amount)).where(
-            POSTransactionORM.store_id == store_id,
-            POSTransactionORM.matched == True
+    total_revenue: float | None = None
+    brand_conversion: dict[str, float] = {}
+
+    registry = get_registry()
+    store_cfg = registry.get(store_id)
+
+    if store_cfg and store_cfg.pos_available and store_cfg.pos_csv_path:
+        from ..pos.parser import parse_pos_csv
+
+        # 1. Total matched revenue
+        rev_q = await db.execute(
+            select(func.sum(POSTransactionORM.amount)).where(
+                POSTransactionORM.store_id == store_id,
+                POSTransactionORM.matched == True
+            )
         )
-    )
-    total_revenue = rev_q.scalar()
-    if total_revenue is not None:
-        total_revenue = round(float(total_revenue), 2)
+        total_revenue = rev_q.scalar()
+        if total_revenue is not None:
+            total_revenue = round(float(total_revenue), 2)
 
-    # 2. Brand conversion stats (visited_brand ∩ purchased_brand)
-    # Load all distinct visitor-zone visits
-    visits_q = await db.execute(
-        select(EventORM.visitor_id, EventORM.zone_id).where(
-            base,
-            EventORM.event_type == "ZONE_ENTER",
-            EventORM.zone_id.isnot(None)
-        ).distinct()
-    )
-    visitor_zones: dict[str, set[str]] = {}
-    brand_visitors: dict[str, int] = {}
-    for row in visits_q.fetchall():
-        visitor_zones.setdefault(row.visitor_id, set()).add(row.zone_id)
-        brand_visitors[row.zone_id] = brand_visitors.get(row.zone_id, 0) + 1
-
-    # Load matched transactions and their brands
-    matched_txns_q = await db.execute(
-        select(POSTransactionORM.txn_id, POSTransactionORM.visitor_id).where(
-            POSTransactionORM.store_id == store_id,
-            POSTransactionORM.matched == True
+        # 2. Brand conversion stats (visited_brand ∩ purchased_brand)
+        # Load all distinct visitor-zone visits
+        visits_q = await db.execute(
+            select(EventORM.visitor_id, EventORM.zone_id).where(
+                base,
+                EventORM.event_type == "ZONE_ENTER",
+                EventORM.zone_id.isnot(None)
+            ).distinct()
         )
-    )
-    matched_visitor_map = {row.txn_id: row.visitor_id for row in matched_txns_q.fetchall()}
-    
-    # Load all POS transactions for this store from CSV
-    txns = parse_pos_csv(POS_CSV_PATH, store_id)
-    txn_map = {t.invoice_number: t for t in txns}
+        visitor_zones: dict[str, set[str]] = {}
+        brand_visitors: dict[str, int] = {}
+        for row in visits_q.fetchall():
+            visitor_zones.setdefault(row.visitor_id, set()).add(row.zone_id)
+            brand_visitors[row.zone_id] = brand_visitors.get(row.zone_id, 0) + 1
 
-    # Load store configuration for brand mapping
-    config = load_store_config(STORE_CONFIG_PATH, store_id)
-    brand_map = config.zone_brand_map() if config else {}
+        # Load matched transactions and their brands
+        matched_txns_q = await db.execute(
+            select(POSTransactionORM.txn_id, POSTransactionORM.visitor_id).where(
+                POSTransactionORM.store_id == store_id,
+                POSTransactionORM.matched == True
+            )
+        )
+        matched_visitor_map = {row.txn_id: row.visitor_id for row in matched_txns_q.fetchall()}
 
-    brand_buyers: dict[str, int] = {}
-    for txn_id, visitor_id in matched_visitor_map.items():
-        txn = txn_map.get(txn_id)
-        if not txn:
-            continue
-        purchased_brands = {b.upper() for b in txn.brands}
-        visited_zones = visitor_zones.get(visitor_id, set())
-        for zone_id in visited_zones:
-            brand_name = brand_map.get(zone_id)
-            if brand_name and brand_name.upper() in purchased_brands:
-                brand_buyers[zone_id] = brand_buyers.get(zone_id, 0) + 1
+        # Load all POS transactions for this store from CSV
+        txns = parse_pos_csv(store_cfg.pos_csv_path, store_id)
+        txn_map = {t.invoice_number: t for t in txns}
 
-    brand_conversion = {}
-    for zone_id in sorted(brand_visitors.keys()):
-        if zone_id in brand_map:
-            visitors = brand_visitors[zone_id]
-            buyers = brand_buyers.get(zone_id, 0)
-            brand_conversion[zone_id] = round((buyers / visitors * 100) if visitors > 0 else 0.0, 1)
+        # Load store configuration for brand mapping
+        config = load_store_config(STORE_CONFIG_PATH, store_id)
+        brand_map = config.zone_brand_map() if config else {}
+
+        brand_buyers: dict[str, int] = {}
+        for txn_id, visitor_id in matched_visitor_map.items():
+            txn = txn_map.get(txn_id)
+            if not txn:
+                continue
+            purchased_brands = {b.upper() for b in txn.brands}
+            visited_zones = visitor_zones.get(visitor_id, set())
+            for zone_id in visited_zones:
+                brand_name = brand_map.get(zone_id)
+                if brand_name and brand_name.upper() in purchased_brands:
+                    brand_buyers[zone_id] = brand_buyers.get(zone_id, 0) + 1
+
+        for zone_id in sorted(brand_visitors.keys()):
+            if zone_id in brand_map:
+                visitors = brand_visitors[zone_id]
+                buyers = brand_buyers.get(zone_id, 0)
+                brand_conversion[zone_id] = round((buyers / visitors * 100) if visitors > 0 else 0.0, 1)
 
     return MetricsResponse(
         store_id=store_id,

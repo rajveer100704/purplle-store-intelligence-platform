@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-06-03T09:53:05.172329+00:00",
+  "stores": [
+    {
+      "store_id": "ST1008",
+      "store_name": "Brigade_Bangalore",
+      "pos_available": true,
+      "entry_cameras": 1,
+      "zone_cameras": 2,
+      "billing_cameras": 1,
+      "total_cameras": 5,
+      "layout_used": true,
+      "visitors": 131,
+      "staff": 0,
+      "total_events": 326,
+      "entry_events": 131,
+      "zone_events": 108,
+      "queue_events": 0,
+      "conversion_rate": 0.0,
+      "conversion_method": "POS-matched",
+      "matched_pos": 0
+    },
+    {
+      "store_id": "STORE_1",
+      "store_name": "Store_1",
+      "pos_available": false,
+      "entry_cameras": 1,
+      "zone_cameras": 2,
+      "billing_cameras": 1,
+      "total_cameras": 4,
+      "layout_used": true,
+      "visitors": 130,
+      "staff": 0,
+      "total_events": 470,
+      "entry_events": 130,
+      "zone_events": 253,
+      "queue_events": 0,
+      "conversion_rate": 0.0,
+      "conversion_method": "queue-based proxy",
+      "matched_pos": null
+    },
+    {
+      "store_id": "STORE_2",
+      "store_name": "Store_2",
+      "pos_available": false,
+      "entry_cameras": 2,
+      "zone_cameras": 1,
+      "billing_cameras": 1,
+      "total_cameras": 4,
+      "layout_used": true,
+      "visitors": 111,
+      "staff": 0,
+      "total_events": 361,
+      "entry_events": 111,
+      "zone_events": 156,
+      "queue_events": 0,
+      "conversion_rate": 0.0,
+      "conversion_method": "queue-based proxy",
+      "matched_pos": null
+    }
+  ]
+}

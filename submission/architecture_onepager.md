@@ -37,10 +37,14 @@ A high-performance, edge-capable retail analytics system that processes security
 - **OSNet Cross-Camera ReID**: Extracts 512-dimensional appearance embeddings per crop. Gallery maps similar identities using cosine similarity ($> 0.75$ same identity, $< 0.55$ new identity, middle band marked as ambiguous).
 
 ### B. Retail Intelligence & Calibration Layer
-- **Physical Zone Mapping**: Scales normalized coordinates from the layout JSON to match the camera's resolution. Tests zone entry/exit using Shapely polygon collision detection.
+- **Physical Zone Mapping**: Scales normalized coordinates from the layout JSON to match the camera's resolution. Tests zone entry/exit using Shapely polygon collision detection. Supports manual brand layouts (ST1008) and auto-generated display zones (STORE_1 / STORE_2).
 - **Staff Recognition**: Excludes store staff from commercial metrics (footfall, queue abandonment, conversions) using a scoring model based on pre-opening arrival, long dwell, appearance density, and uniform color.
 
 ### C. POS Transaction Correlation
 - **POS Parser**: Group invoices by checkout receipt time.
 - **Match Correlation**: Evaluates checkout times against visitor exits. Attributes conversions correctly using the intersection of visited shelves and purchased items.
 - **Scaling Capability**: For large deployments, matching scales from $O(N \times M)$ to $O(N \log M)$ using sorted timestamps and binary search window checks.
+
+---
+
+\* *Display-level conversion validation was performed on ST1008, which includes store layout and POS resources.*

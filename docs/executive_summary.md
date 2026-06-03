@@ -33,27 +33,29 @@ POS Invoice CSV ────────────→ POS Correlator V2 (±5 m
 
 The platform was validated in two complementary modes. See [`data_provenance.md`](./data_provenance.md) for the full explanation.
 
-### Mode 1 — Real CCTV Validation (Brigade Road, ST1008)
+### Mode 1 — Real CCTV Validation (Generalization across 3 Stores & 13 Cameras)
 
-These numbers come from running the full pipeline on 5 actual CCTV cameras (~70 min footage):
+These numbers come from running the full pipeline on 13 actual CCTV camera streams across 3 distinct stores (ST1008, STORE_1, and STORE_2):
 
-- **Footfall Tracking**: **131 unique visitors** detected and tracked across 5 cameras.
-- **Zone Engagement**: 54 visitors (41.2%) entered at least one brand zone.
-- **Events Generated**: 326 business events (ENTRY, EXIT, ZONE_ENTER, ZONE_EXIT, ZONE_DWELL).
-- **Processing Performance**: ~7 min wall-clock on CPU (5 cameras, `--skip-frames 10`).
+- **Store Coverage**: Validated on **3 physical stores** with different layouts and camera counts with zero code modifications.
+- **Algorithmic Portability**: Validated across 3 independent stores with 0 algorithmic code changes.
+- **Footfall & Tracking**: Tracked **372 unique customers** across **13 total camera streams**.
+- **Events Generated**: **1,157 total events** (ENTRY, EXIT, ZONE_ENTER, ZONE_EXIT, ZONE_DWELL) successfully processed.
+- **Graceful Operation Without POS Data**: Gracefully falls back to queue-based proxy metrics when POS data is unavailable.
+- **Note on Zones**: Display zone analysis for STORE_1 and STORE_2 was validated using automatically generated default zones (no brand-level retail accuracy implied).
 
 ### Mode 2 — End-to-End Business Demo (POS Correlation Validation)
 
 These numbers come from `scripts/generate_demo.py` using the real 24-invoice POS CSV with timestamp-aligned synthetic journeys, demonstrating full funnel capability:
 
 - **Footfall**: 40 simulated customer sessions (24 purchasers + 14 browsers + 2 queue abandoners).
-- **POS Match Rate**: **87.5%** — the correlator linked 35 of 40 sessions to a POS invoice within the ±5-minute window.
+- **POS Match Rate**: **87.5%** — the correlator matched 21 of 24 POS invoices to visitor sessions within the ±5-minute window.
 - **Funnel Conversion Rate**: **40%** — 16 of 40 visitors completed the full entry → zone → billing → purchase journey.
 - **Matched Revenue**: Rs. 34,331.71 in correlated sales value.
 - **Checkout Abandonment**: 7.7% queue drop-off rate.
 - **Operational Alerts**: Dead zones (e.g. Minimalist displays) flagged automatically on inactive visitor periods.
 
-> **87.5% vs 40%**: These are different metrics. 87.5% is the POS system's ability to link a visitor track to a receipt (match rate). 40% is the retail conversion funnel (how many store entrants completed a purchase journey). See [`data_provenance.md`](./data_provenance.md) for the full breakdown.
+> **87.5% vs 40%**: These are different metrics. 87.5% is the POS system's ability to match receipts to visitors (attribution rate). 40% is the retail conversion funnel (how many store entrants completed a purchase journey). See [`data_provenance.md`](./data_provenance.md) for the full breakdown.
 
 > **Why two modes?** The real CCTV footage timestamps (2026-05-30) do not align with the POS invoice dates (2026-04-10), so POS correlation is validated through the demo. See [`data_provenance.md`](./data_provenance.md) for the complete rationale.
 

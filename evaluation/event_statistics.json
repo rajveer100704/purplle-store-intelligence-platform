@@ -10,5 +10,6 @@
   "unique_visitors": 131,
   "customers": 131,
   "staff": 0,
-  "matched_pos_transactions": 0
+  "matched_pos_transactions": 0,
+  "pos_available": true
 }

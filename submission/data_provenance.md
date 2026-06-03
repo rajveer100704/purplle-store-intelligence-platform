@@ -68,15 +68,15 @@ they represent two distinct validation modes designed to prove different capabil
 | Of which: purchasers (1 per POS invoice) | **24** | `generate_demo.py` — line 116 |
 | Of which: browsers (no purchase) | **14** | 24 × 0.6 rounded |
 | Of which: queue abandoners | **2** | 24 × 0.1 rounded |
-| POS transactions matched by correlator | **35 / 40** (**87.5%**) | `dashboard.png` KPI card |
+| POS transactions matched by correlator | **21 / 24** (**87.5%**) | `dashboard.png` KPI card |
 | Revenue attributed | **₹34,331** | `dashboard.png` KPI card |
 | Funnel conversion (Entry → Purchase) | **40%** (16/40) | `funnel.png` Stage 4 |
 | Checkout abandonment | **7.7%** | `dashboard.png` KPI card |
 
 > **Two different conversion metrics — both correct:**
-> - **87.5% ("Transactions / Total Footfall")**: The POS Correlator matched 35 of 40 sessions to an invoice. This is the POS **match rate** — how well the system links visitors to receipts. 5 purchasers had exit events that drifted outside the ±5-minute correlation window (simulated camera blind spots), so they went unmatched.
+> - **87.5% ("Matched Invoices / Total Invoices")**: The POS Correlator matched 21 of 24 invoices. This is the POS **match rate** (attribution rate) — how well the system links transactions to visitors. 3 invoices could not be matched because their corresponding customer exit events drifted outside the ±5-minute correlation window (simulated camera blind spots), so they went unmatched.
 > - **40% (Funnel Conversion)**: 16 of 40 sessions completed the full entry → zone visit → billing queue → matched purchase journey in the funnel analytics. This is the end-to-end **retail conversion rate** — the business KPI.
-> These are not contradictory: 35 invoices were matched (matched to *a* visitor), but only 16 visitors completed every funnel stage cleanly.
+> These are not contradictory: 21 invoices were matched (matched to a visitor), but only 16 visitors completed every funnel stage cleanly.
 
 > **Why 40 customers, not 131?** The demo generator creates one synthetic journey per simulated
 > customer (40 journeys). The real CCTV run tracked 131 actual persons entering the store.
@@ -147,7 +147,7 @@ is kept for transparency to show the initial exploration phase.
 > **proves the POS correlation, revenue attribution, funnel analytics, and dashboard work correctly
 > end-to-end** when timestamps are aligned.
 >
-> The 87.5% figure on the dashboard is the **POS match rate** (35 of 40 sessions linked to an invoice).
+> The 87.5% figure on the dashboard is the **POS match rate** (21 of 24 invoices matched to visitor sessions).
 > The 40% figure in the funnel is the **retail conversion rate** (16 of 40 visitors completed the
 > full entry → zone → billing → purchase journey). Both are correct and measure different things.
 >

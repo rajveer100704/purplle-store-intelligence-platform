@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-06-03T09:53:04.762601+00:00",
+  "store_id": "STORE_2",
+  "pos_available": false,
+  "event_counts": {
+    "ENTRY": 111,
+    "ZONE_ENTER": 110,
+    "EXIT": 92,
+    "ZONE_EXIT": 41,
+    "ZONE_DWELL": 5,
+    "REENTRY": 2
+  },
+  "unique_visitors": 111,
+  "customers": 111,
+  "staff": 0,
+  "matched_pos_transactions": null,
+  "conversion_rate": 0.0
+}

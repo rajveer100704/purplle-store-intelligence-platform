@@ -22,6 +22,7 @@ from .heatmap import router as heatmap_router
 from .anomalies import router as anomalies_router
 from .health import router as health_router
 from .debug import router as debug_router
+from .stores import router as stores_router
 from .middleware import RequestLogMiddleware
 
 # Configure root logger for JSON output
@@ -40,6 +41,7 @@ app = FastAPI(
     description=(
         "Real-time retail analytics powered by CCTV video processing.\n\n"
         "**Endpoints:**\n"
+        "- `GET /stores` – list all registered stores & camera topology\n"
         "- `POST /events/ingest` – ingest event batches (up to 500)\n"
         "- `GET /stores/{id}/metrics` – footfall, conversion, dwell, queue\n"
         "- `GET /stores/{id}/funnel` – customer journey funnel\n"
@@ -63,6 +65,7 @@ app.add_middleware(
 app.add_middleware(RequestLogMiddleware)
 
 # ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(stores_router, tags=["Stores"])
 app.include_router(ingest_router, tags=["Ingest"])
 app.include_router(metrics_router, tags=["Analytics"])
 app.include_router(funnel_router, tags=["Analytics"])
