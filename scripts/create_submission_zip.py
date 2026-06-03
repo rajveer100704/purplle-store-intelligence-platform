@@ -17,6 +17,7 @@ def create_zip(source_dir: Path, output_zip: Path):
         '.coverage',
         '.env',
         'yolov8s.pt',
+        'store_intelligence.db',
         'store_intelligence.db-journal'
     }
 
@@ -41,7 +42,7 @@ def create_zip(source_dir: Path, output_zip: Path):
 
 if __name__ == '__main__':
     workspace = Path(r'c:\Users\BIT\Purplle_Hackathon')
-    output = workspace / 'purplle_store_intelligence_submission.zip'
+    output = workspace / 'archive' / 'purplle_store_intelligence_submission.zip'
     create_zip(workspace, output)
     print(f"\n[SUCCESS] Created zip archive at: {output}")
     print(f"Size: {output.stat().st_size / 1024 / 1024:.2f} MB")

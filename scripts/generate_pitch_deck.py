@@ -328,4 +328,4 @@ def create_deck(output_pdf_path):
     print(f"[SUCCESS] Created pitch deck PDF at: {output_pdf_path}")
 
 if __name__ == '__main__':
-    create_deck(r'c:\Users\BIT\Purplle_Hackathon\purplle_store_intelligence_pitch_deck.pdf')
+    create_deck(r'c:\Users\BIT\Purplle_Hackathon\assets\slides\purplle_store_intelligence_pitch_deck.pdf')

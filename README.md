@@ -141,24 +141,27 @@ pytest tests/ -v
 
 ```
 src/
-├── scanner.py           # Dataset validator
-├── detector.py          # YOLOv8s person detection
-├── tracker.py           # ByteTrack multi-object tracking
-├── reid.py              # OSNet ReID cross-camera identity
-├── state_machine.py     # VisitorStateMachine (6 states)
-├── session_manager.py   # Visitor session lifecycle
-├── event_emitter.py     # Event generation (8 types)
-├── pos_correlator.py    # POS ↔ session correlation
-├── anomaly_engine.py    # 3-type anomaly detection
-├── pipeline.py          # Main orchestrator
-├── replay.py            # Live replay mode
-├── api/                 # FastAPI endpoints
-└── db/                  # SQLAlchemy ORM
+├── api/                 # FastAPI router and endpoints
+├── db/                  # SQLAlchemy models and connection
+├── layout/              # Polygon layout registry and scaling
+├── pos/                 # POS receipt parsing and correlation
+├── analytics/           # Cross-store analytics engine
+├── detector.py          # YOLOv8s person detector
+├── tracker.py           # ByteTrack multi-object tracker
+├── reid.py              # OSNet cross-camera re-identification
+├── state_machine.py     # Finite State Machine for visitor journey (6 states)
+├── session_manager.py   # Session lifecycle and staff filtering
+├── event_emitter.py     # Event generator for API ingestion (8 types)
+├── anomaly_engine.py    # Anomaly detector (queue spikes, dead zones)
+├── pipeline.py          # Main E2E video processing pipeline
+└── replay.py            # Event replay utility
 
-dashboard/app.py         # Streamlit dashboard
-tests/                   # pytest test suite
-DESIGN.md                # Architecture & data flow
-CHOICES.md               # Key technical decisions
+dashboard/               # Streamlit evaluation dashboard
+scripts/                 # Orchestrators and generator tools
+tests/                   # Pytest verification suite (82 checks)
+docs/                    # Comprehensive system documentation
+assets/                  # Screenshots, layouts, and slides
+archive/                 # Development task files and scratch files
 ```
 
 ---

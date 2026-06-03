@@ -11,3 +11,14 @@ env/
 venv/
 ENV/
 yolov8s.pt
+
+# SQLite database files
+store_intelligence.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary/Local event outputs
+results/*.jsonl
+results/*.csv
+demo/*.jsonl

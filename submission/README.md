@@ -103,27 +103,36 @@ streamlit run dashboard/app.py
 ```
 Purplle_Hackathon/
 ├── README.md                          # Project overview
-├── DESIGN.md                          # Full architecture design document
 ├── docs/
-│   ├── executive_summary.md           # Business brief
+│   ├── architecture/
+│   │   ├── DESIGN.md                  # Full architecture design document
+│   │   ├── CHOICES.md                 # Key technical decisions
+│   │   └── architecture_onepager.md   # 1-page architecture brief
+│   ├── reports/
+│   │   ├── executive_summary.md       # Business brief
+│   │   ├── data_provenance.md         # Explains validation modes
+│   │   ├── api_validation.md          # API contract validation
+│   │   ├── real_run_report.md         # Real CCTV validation report
+│   │   └── multi_store_generalization.md # Generalization summary
+│   ├── interview/
+│   │   ├── interview_prep.md          # ⭐ Interview prep & demo guide
+│   │   └── interview_qa.md            # 14 technical Q&As
 │   ├── architecture_audit.md          # FSM + schema consistency audit
-│   ├── interview_qa.md                # 14 technical Q&As
-│   ├── interview_prep.md              # ⭐ Interview prep & demo guide
 │   ├── limitations.md                 # Honest system limitations
 │   └── risk_register.md               # Risk register with mitigations
+├── assets/
+│   ├── screenshots/                   # Dashboard, heatmap, funnel, and anomaly pngs
+│   ├── layouts/                       # layout_image_0 & 1 pngs
+│   └── slides/                        # Pitch deck PDF
 ├── evaluation/
-│   ├── real_run_report.md             # Real CCTV pipeline results
-│   ├── api_validation.md              # API contract validation
-│   ├── docker_validation.md           # Docker startup validation
-│   ├── reproducibility.md             # Python versions, config, seeds
+│   ├── cross_store_validation.md      # comparative dashboard
+│   ├── store_coverage_report.md       # Generalization evidence
+│   ├── ST1008_validation_report.md    # Brigade Road validation report
+│   ├── STORE_1_validation_report.md   # Store 1 validation report
+│   ├── STORE_2_validation_report.md   # Store 2 validation report
 │   ├── reid_validation.md             # ReID threshold sweep evidence
 │   ├── staff_validation.md            # Staff detection accuracy
-│   ├── failure_analysis.md            # Failure modes and root causes
-│   ├── dataset_profile.md             # Video characteristics
-│   └── annotations/
-│       ├── reid_pairs.csv             # 15 manually labelled ReID pairs
-│       ├── staff_labels.csv           # Ground-truth staff labels
-│       └── manual_counts.json         # Per-camera manual entry/exit counts
+│   └── failure_analysis.md            # Failure modes and root causes
 └── results/
     └── real_events.jsonl              # 326 events from real CCTV run
 ```
