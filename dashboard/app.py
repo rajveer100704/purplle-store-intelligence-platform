@@ -46,6 +46,16 @@ try:
 except Exception:
     LOCAL_DB_AVAILABLE = False
 
+# Auto-generate local SQLite database if missing (e.g. on Streamlit Cloud deployment)
+if LOCAL_DB_AVAILABLE:
+    db_file = Path(project_root) / "store_intelligence.db"
+    if not db_file.exists():
+        try:
+            from scripts.generate_demo import run_demo
+            asyncio.run(run_demo())
+        except Exception:
+            pass
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────────────────────────────────────
